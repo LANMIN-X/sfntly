@@ -64,7 +64,9 @@ public class Subsetter {
   public void setGlyphs(List<Integer> glyphs) {
     this.newToOldGlyphs = new ArrayList<Integer>(glyphs);
   }
-
+  public void setCharsCodePoints(Set<Integer> charsCodePoints) {
+	  this.charsCodePoints = charsCodePoints;
+  }
   /**
    * Set the cmaps to be used in the subsetted font. The cmaps are listed in
    * order of priority and the number parameter gives a count of how many of the
