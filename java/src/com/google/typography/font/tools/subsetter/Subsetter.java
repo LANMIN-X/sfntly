@@ -22,7 +22,6 @@ import com.google.typography.font.sfntly.Tag;
 import com.google.typography.font.sfntly.table.Table;
 import com.google.typography.font.sfntly.table.core.CMap;
 import com.google.typography.font.sfntly.table.core.CMapTable;
-
 import java.io.IOException;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
@@ -43,8 +42,8 @@ public class Subsetter {
   protected final Font font;
 
   // TODO(stuartg): add SmartFontBuilder
-  //private SmartFontBuilder fontBuilder;
-  private FontFactory fontFactory;
+  // private SmartFontBuilder fontBuilder;
+  private final FontFactory fontFactory;
   // TODO(stuartg): can TableSubsetter become TableProcessor?
   protected Set<TableSubsetter> tableSubsetters;
 
@@ -52,6 +51,7 @@ public class Subsetter {
   private Set<Integer> removeTables;
   private List<Integer> newToOldGlyphs;
   private List<CMapTable.CMapId> cmapIds;
+  private Set<Integer> charsCodePoints;
 
   // inverse of mapping, computed lazily
   private Map<Integer, Integer> oldToNewGlyphs = null;
@@ -62,38 +62,36 @@ public class Subsetter {
   }
 
   public void setGlyphs(List<Integer> glyphs) {
-    this.newToOldGlyphs = new ArrayList<Integer>(glyphs);
+    this.newToOldGlyphs = new ArrayList<>(glyphs);
   }
   public void setCharsCodePoints(Set<Integer> charsCodePoints) {
 	  this.charsCodePoints = charsCodePoints;
   }
+
   /**
-   * Set the cmaps to be used in the subsetted font. The cmaps are listed in
-   * order of priority and the number parameter gives a count of how many of the
-   * list should be put into the subsetted font. If there are no matches in the
-   * font for any of the provided cmap ids which would lead to a font with no
-   * cmap then an error will be thrown during subsetting.
+   * Set the cmaps to be used in the subsetted font. The cmaps are listed in order of priority and
+   * the number parameter gives a count of how many of the list should be put into the subsetted
+   * font. If there are no matches in the font for any of the provided cmap ids which would lead to
+   * a font with no cmap then an error will be thrown during subsetting.
    *
-   * The two most common cases would be: <list>
+   * <p>The two most common cases would be:
+   *
    * <ul>
-   * a list of one or more cmap ids with a count setting of 1 <br>This will use
-   * the list of cmap ids as an ordered priority and look for an available cmap
-   * in the font that matches the requests. Only the first such match will be
-   * placed in the subsetted font.
+   *   <li>a list of one or more cmap ids with a count setting of 1 <br>
+   *       This will use the list of cmap ids as an ordered priority and look for an available cmap
+   *       in the font that matches the requests. Only the first such match will be placed in the
+   *       subsetted font.
+   *   <li>a list of one or more cmap ids with a count setting equal to the list length <br>
+   *       This will use the list of cmap ids and try to place each one specified into the subsetted
+   *       font.
    * </ul>
-   * <ul>
-   * a list of one or more cmap ids with a count setting equal to the list
-   * length <br>This will use the list of cmap ids and try to place each one
-   * specified into the subsetted font.
-   * </ul>
-   * </list>
    *
    * @param cmapIds the cmap ids to use for the subsetted font
    * @param number the maximum number of cmaps to place in the subsetted font
    */
   public void setCMaps(List<CMapTable.CMapId> cmapIds, int number) {
-    this.cmapIds = new ArrayList<CMapTable.CMapId>();
-    CMapTable cmapTable = this.font.getTable(Tag.cmap);
+    this.cmapIds = new ArrayList<>();
+    CMapTable cmapTable = font.getTable(Tag.cmap);
     if (cmapTable == null) {
       throw new InvalidParameterException("Font has no cmap table.");
     }
@@ -115,27 +113,27 @@ public class Subsetter {
   }
 
   public void setRemoveTables(Set<Integer> removeTables) {
-    this.removeTables = new HashSet<Integer>(removeTables);
+    this.removeTables = new HashSet<>(removeTables);
   }
 
   public Font.Builder subset() throws IOException {
-    Font.Builder fontBuilder = this.fontFactory.newFontBuilder();
+    Font.Builder fontBuilder = fontFactory.newFontBuilder();
 
     setUpTables(fontBuilder);
 
-    Set<Integer> tableTags = new TreeSet<Integer>(this.font.tableMap().keySet());
-    if (this.removeTables != null) {
-      tableTags.removeAll(this.removeTables);
+    Set<Integer> tableTags = new TreeSet<>(font.tableMap().keySet());
+    if (removeTables != null) {
+      tableTags.removeAll(removeTables);
     }
 
-    for (TableSubsetter tableSubsetter : this.tableSubsetters) {
-      boolean handled = tableSubsetter.subset(this, this.font, fontBuilder);
+    for (TableSubsetter tableSubsetter : tableSubsetters) {
+      boolean handled = tableSubsetter.subset(this, font, fontBuilder);
       if (handled) {
         tableTags.removeAll(tableSubsetter.tagsHandled());
       }
     }
     for (Integer tag : tableTags) {
-      Table table = this.font.getTable(tag);
+      Table table = font.getTable(tag);
       if (table != null) {
         fontBuilder.newTableBuilder(tag, table.readFontData());
       }
@@ -149,7 +147,7 @@ public class Subsetter {
    * @return the permutation table
    */
   List<Integer> glyphMappingTable() {
-    return this.newToOldGlyphs;
+    return newToOldGlyphs;
   }
 
   /**
@@ -159,7 +157,7 @@ public class Subsetter {
    */
   Map<Integer, Integer> getInverseMapping() {
     if (oldToNewGlyphs == null) {
-      oldToNewGlyphs = new HashMap<Integer, Integer>();
+      oldToNewGlyphs = new HashMap<>();
       List<Integer> mapping = glyphMappingTable();
       for (int i = 0; i < mapping.size(); i++) {
         oldToNewGlyphs.put(mapping.get(i), i);
@@ -169,10 +167,14 @@ public class Subsetter {
   }
 
   List<CMapTable.CMapId> cmapId() {
-    return this.cmapIds;
+    return cmapIds;
   }
+  
+  Set<Integer> charsCodePoints () {
+	  	return charsCodePoints;
+  }
+  
 
   // A hook for subclasses to override, to set up tables.
-  protected void setUpTables(Font.Builder fontBuilder) {
-  }
+  protected void setUpTables(Font.Builder fontBuilder) {}
 }
