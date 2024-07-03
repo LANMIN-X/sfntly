@@ -19,7 +19,6 @@ package com.google.typography.font.tools.sfnttool;
 import com.google.typography.font.sfntly.Font;
 import com.google.typography.font.sfntly.FontFactory;
 import com.google.typography.font.sfntly.Tag;
-import com.google.typography.font.sfntly.data.SfStringUtils;
 import com.google.typography.font.sfntly.data.WritableFontData;
 import com.google.typography.font.sfntly.table.core.CMapTable;
 import com.google.typography.font.tools.conversion.eot.EOTWriter;
@@ -27,16 +26,12 @@ import com.google.typography.font.tools.conversion.woff.WoffWriter;
 import com.google.typography.font.tools.subsetter.HintStripper;
 import com.google.typography.font.tools.subsetter.RenumberingSubsetter;
 import com.google.typography.font.tools.subsetter.Subsetter;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -143,72 +138,72 @@ public class SfntTool {
   }
 
   public void subsetFontFile() throws IOException {
-  FontFactory fontFactory = FontFactory.getInstance();
-  try (FileInputStream fis = new FileInputStream(fontFile)) {
-    byte[] fontBytes = new byte[(int) fontFile.length()];
-    fis.read(fontBytes);
-    Font[] fontArray = fontFactory.loadFonts(fontBytes);
-    Font font = fontArray[0];
-    List<CMapTable.CMapId> cmapIds = new ArrayList<>();
-    cmapIds.add(CMapTable.CMapId.WINDOWS_BMP);
-    for (int i = 0; i < iterations; i++) {
-      Font newFont = font;
-      if (subsetString != null) {
-        Subsetter subsetter = new RenumberingSubsetter(newFont, fontFactory);
-        subsetter.setCMaps(cmapIds, 1);
-        
-        // 将subsetString转换为Set<Integer>
-        Set<Integer> chars = new HashSet<>();
-        subsetString.codePoints().forEach(chars::add);
-        
-        List<Integer> glyphs = GlyphCoverage.getGlyphCoverage(font, chars);
-        subsetter.setGlyphs(glyphs);
-        subsetter.setCharsCodePoints(chars);
-        
-        Set<Integer> removeTables = new HashSet<>();
-        // 移除部分表
-        removeTables.add(Tag.GDEF);
-        removeTables.add(Tag.GPOS);
-        removeTables.add(Tag.GSUB);
-        removeTables.add(Tag.kern);
-        removeTables.add(Tag.hdmx);
-        removeTables.add(Tag.vmtx);
-        removeTables.add(Tag.VDMX);
-        removeTables.add(Tag.LTSH);
-        removeTables.add(Tag.DSIG);
-        removeTables.add(Tag.vhea);
-        // 移除AAT表
-        removeTables.add(Tag.intValue(new byte[] {'m', 'o', 'r', 't'}));
-        removeTables.add(Tag.intValue(new byte[] {'m', 'o', 'r', 'x'}));
-        subsetter.setRemoveTables(removeTables);
-        newFont = subsetter.subset().build();
-      }
-      if (strip) {
-        Subsetter hintStripper = new HintStripper(newFont, fontFactory);
-        Set<Integer> removeTables = new HashSet<>();
-        removeTables.add(Tag.fpgm);
-        removeTables.add(Tag.prep);
-        removeTables.add(Tag.cvt);
-        removeTables.add(Tag.hdmx);
-        removeTables.add(Tag.VDMX);
-        removeTables.add(Tag.LTSH);
-        removeTables.add(Tag.DSIG);
-        removeTables.add(Tag.vhea);
-        hintStripper.setRemoveTables(removeTables);
-        newFont = hintStripper.subset().build();
-      }
+    FontFactory fontFactory = FontFactory.getInstance();
+    try (FileInputStream fis = new FileInputStream(fontFile)) {
+      byte[] fontBytes = new byte[(int) fontFile.length()];
+      fis.read(fontBytes);
+      Font[] fontArray = fontFactory.loadFonts(fontBytes);
+      Font font = fontArray[0];
+      List<CMapTable.CMapId> cmapIds = new ArrayList<>();
+      cmapIds.add(CMapTable.CMapId.WINDOWS_BMP);
+      for (int i = 0; i < iterations; i++) {
+        Font newFont = font;
+        if (subsetString != null) {
+          Subsetter subsetter = new RenumberingSubsetter(newFont, fontFactory);
+          subsetter.setCMaps(cmapIds, 1);
+          
+          // 将subsetString转换为Set<Integer>
+          Set<Integer> chars = new HashSet<>();
+          subsetString.codePoints().forEach(chars::add);
+          
+          List<Integer> glyphs = GlyphCoverage.getGlyphCoverage(font, chars);
+          subsetter.setGlyphs(glyphs);
+          subsetter.setCharsCodePoints(chars);
+          
+          Set<Integer> removeTables = new HashSet<>();
+          // 移除部分表
+          removeTables.add(Tag.GDEF);
+          removeTables.add(Tag.GPOS);
+          removeTables.add(Tag.GSUB);
+          removeTables.add(Tag.kern);
+          removeTables.add(Tag.hdmx);
+          removeTables.add(Tag.vmtx);
+          removeTables.add(Tag.VDMX);
+          removeTables.add(Tag.LTSH);
+          removeTables.add(Tag.DSIG);
+          removeTables.add(Tag.vhea);
+          // 移除AAT表
+          removeTables.add(Tag.intValue(new byte[] {'m', 'o', 'r', 't'}));
+          removeTables.add(Tag.intValue(new byte[] {'m', 'o', 'r', 'x'}));
+          subsetter.setRemoveTables(removeTables);
+          newFont = subsetter.subset().build();
+        }
+        if (strip) {
+          Subsetter hintStripper = new HintStripper(newFont, fontFactory);
+          Set<Integer> removeTables = new HashSet<>();
+          removeTables.add(Tag.fpgm);
+          removeTables.add(Tag.prep);
+          removeTables.add(Tag.cvt);
+          removeTables.add(Tag.hdmx);
+          removeTables.add(Tag.VDMX);
+          removeTables.add(Tag.LTSH);
+          removeTables.add(Tag.DSIG);
+          removeTables.add(Tag.vhea);
+          hintStripper.setRemoveTables(removeTables);
+          newFont = hintStripper.subset().build();
+        }
 
-      FileOutputStream fos = new FileOutputStream(outputFile);
-      if (woff) {
-        WritableFontData woffData = new WoffWriter().convert(newFont);
-        woffData.copyTo(fos);
-      } else if (eot) {
-        WritableFontData eotData = new EOTWriter(mtx).convert(newFont);
-        eotData.copyTo(fos);
-      } else {
-        fontFactory.serializeFont(newFont, fos);
+        FileOutputStream fos = new FileOutputStream(outputFile);
+        if (woff) {
+          WritableFontData woffData = new WoffWriter().convert(newFont);
+          woffData.copyTo(fos);
+        } else if (eot) {
+          WritableFontData eotData = new EOTWriter(mtx).convert(newFont);
+          eotData.copyTo(fos);
+        } else {
+          fontFactory.serializeFont(newFont, fos);
+        }
       }
     }
   }
-}
 }
