@@ -14,13 +14,9 @@
   </target>
   
 <properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<java.version>11</java.version>
-		<maven.compiler.source>11</maven.compiler.source>
-		<maven.compiler.target>11</maven.compiler.target>
-		<maven.compiler.compilerVersion>11</maven.compiler.compilerVersion>
-	</properties>
+    <maven.compiler.source>11</maven.compiler.source>
+    <maven.compiler.target>11</maven.compiler.target>
+</properties>
   
   <target name="test" depends="compile-test">
    <mkdir dir="${report-test.dir}" />
