@@ -5,13 +5,14 @@ package com.google.typography.font.sfntly.table.opentype.component;
 import com.google.typography.font.sfntly.data.ReadableFontData;
 import com.google.typography.font.sfntly.data.WritableFontData;
 import com.google.typography.font.sfntly.table.SubTable;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
 public abstract class OffsetRecordTable<S extends SubTable> extends HeaderTable
-    implements Iterable<S> {
+implements Iterable<S> {
   public final NumRecordList recordList;
 
   // ///////////////
@@ -87,8 +88,8 @@ public abstract class OffsetRecordTable<S extends SubTable> extends HeaderTable
   }
 
   public abstract static class Builder<
-          T extends OffsetRecordTable<? extends SubTable>, S extends SubTable>
-      extends HeaderTable.Builder<T> {
+  T extends OffsetRecordTable<? extends SubTable>, S extends SubTable>
+  extends HeaderTable.Builder<T> {
 
     private List<VisibleSubTable.Builder<S>> builders;
     private boolean dataIsCanonical;
@@ -250,7 +251,7 @@ public abstract class OffsetRecordTable<S extends SubTable> extends HeaderTable
 
     private void initFromData(NumRecordList recordList) {
       ReadableFontData data = recordList.readData;
-      builders = new ArrayList<>();
+      builders = new ArrayList<VisibleSubTable.Builder<S>>();
       if (data == null) {
         return;
       }
@@ -259,6 +260,7 @@ public abstract class OffsetRecordTable<S extends SubTable> extends HeaderTable
         return;
       }
 
+      int subTableLimit = recordList.limit();
       Iterator<NumRecord> recordIterator = recordList.iterator();
       do {
         NumRecord record = recordIterator.next();

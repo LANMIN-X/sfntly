@@ -3,14 +3,15 @@ package com.google.typography.font.sfntly.table.opentype.component;
 import com.google.typography.font.sfntly.data.ReadableFontData;
 import com.google.typography.font.sfntly.data.WritableFontData;
 import com.google.typography.font.sfntly.table.SubTable;
+
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 public abstract class HeaderTable extends SubTable {
   protected static final int FIELD_SIZE = 2;
-
-  protected final boolean dataIsCanonical;
-  protected final int base;
+  protected boolean dataIsCanonical = false;
+  protected int base = 0;
 
   protected HeaderTable(ReadableFontData data, int base, boolean dataIsCanonical) {
     super(data);
@@ -29,7 +30,7 @@ public abstract class HeaderTable extends SubTable {
   public abstract int fieldCount();
 
   public abstract static class Builder<T extends HeaderTable> extends VisibleSubTable.Builder<T> {
-    private Map<Integer, Integer> map = new HashMap<>();
+    private Map<Integer, Integer> map = new HashMap<Integer, Integer>();
     protected boolean dataIsCanonical = false;
 
     protected Builder() {
@@ -73,8 +74,9 @@ public abstract class HeaderTable extends SubTable {
     }
 
     /**
-     * Even though public, not to be used by the end users. Made public only make it available to
-     * packages under {@code com.google.typography.font.sfntly.table.opentype}.
+     * Even though public, not to be used by the end users. Made public only
+     * make it available to packages under
+     * {@code com.google.typography.font.sfntly.table.opentype}.
      */
     @Override
     public int subDataSizeToSerialize() {
@@ -83,7 +85,7 @@ public abstract class HeaderTable extends SubTable {
 
     @Override
     public int subSerialize(WritableFontData newData) {
-      for (Map.Entry<Integer, Integer> entry : map.entrySet()) {
+      for (Entry<Integer, Integer> entry : map.entrySet()) {
         newData.writeUShort(entry.getKey() * FIELD_SIZE, entry.getValue());
       }
       return headerSize();
@@ -91,7 +93,7 @@ public abstract class HeaderTable extends SubTable {
 
     @Override
     public void subDataSet() {
-      map = new HashMap<>();
+      map = new HashMap<Integer, Integer>();
     }
 
     @Override

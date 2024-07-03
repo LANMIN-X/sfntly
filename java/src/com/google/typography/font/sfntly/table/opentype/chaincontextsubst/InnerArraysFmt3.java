@@ -75,10 +75,8 @@ public class InnerArraysFmt3 extends SubTable {
         return 0;
       }
 
-      if (backtrackGlyphsBuilder == null
-          || inputGlyphsBuilder == null
-          || lookAheadGlyphsBuilder == null
-          || lookupRecordsBuilder == null) {
+      if (backtrackGlyphsBuilder == null || inputGlyphsBuilder == null
+          || lookAheadGlyphsBuilder == null || lookupRecordsBuilder == null) {
         return serializeFromData(newData);
       }
 
@@ -86,8 +84,8 @@ public class InnerArraysFmt3 extends SubTable {
       tableOnlySize += backtrackGlyphsBuilder.tableSizeToSerialize();
       tableOnlySize += inputGlyphsBuilder.tableSizeToSerialize();
       tableOnlySize += lookAheadGlyphsBuilder.tableSizeToSerialize();
-      int subTableWriteOffset =
-          tableOnlySize + lookupRecordsBuilder.writeTo(newData.slice(tableOnlySize));
+      int subTableWriteOffset = tableOnlySize
+          + lookupRecordsBuilder.writeTo(newData.slice(tableOnlySize));
 
       backtrackGlyphsBuilder.subSerialize(newData, subTableWriteOffset);
       subTableWriteOffset += backtrackGlyphsBuilder.subTableSizeToSerialize();
@@ -130,10 +128,8 @@ public class InnerArraysFmt3 extends SubTable {
     }
 
     private void initFromData(ReadableFontData data) {
-      if (backtrackGlyphsBuilder == null
-          || inputGlyphsBuilder == null
-          || lookAheadGlyphsBuilder == null
-          || lookupRecordsBuilder == null) {
+      if (backtrackGlyphsBuilder == null || inputGlyphsBuilder == null
+          || lookAheadGlyphsBuilder == null || lookupRecordsBuilder == null) {
         NumRecordList records = new NumRecordList(data);
         backtrackGlyphsBuilder = new CoverageArray.Builder(records);
 

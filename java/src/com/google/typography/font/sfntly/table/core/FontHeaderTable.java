@@ -16,91 +16,128 @@
 
 package com.google.typography.font.sfntly.table.core;
 
-import com.google.typography.font.sfntly.Tag;
 import com.google.typography.font.sfntly.data.ReadableFontData;
 import com.google.typography.font.sfntly.data.WritableFontData;
 import com.google.typography.font.sfntly.table.Header;
 import com.google.typography.font.sfntly.table.Table;
 import com.google.typography.font.sfntly.table.TableBasedTableBuilder;
 import com.google.typography.font.sfntly.table.truetype.LocaTable;
+
 import java.util.EnumSet;
 
 /**
- * A Font Header table ('head').
- *
+ * A Font Header table.
+ * 
  * @author Stuart Gill
- * @see Tag#head
- * @see "ISO/IEC 14496-22:2015, section 5.2.2"
  */
 public final class FontHeaderTable extends Table {
-
+  
   /**
-   * Checksum adjustment base value. To compute the checksum adjustment: 1) set it to 0; 2) sum the
-   * entire font as ULONG, 3) then store 0xB1B0AFBA - sum.
+   * Checksum adjustment base value. To compute the checksum adjustment: 
+   * 1) set it to 0; 2) sum the entire font as ULONG, 3) then store 0xB1B0AFBA - sum.
    */
   public static final long CHECKSUM_ADJUSTMENT_BASE = 0xB1B0AFBAL;
-
-  /** Magic number value stored in the magic number field. */
+  
+  /**
+   * Magic number value stored in the magic number field.
+   */
   public static final long MAGIC_NUMBER = 0x5F0F3CF5L;
 
-  /** The ranges to use for checksum calculation. */
-  private static final int[] CHECKSUM_RANGES = {0, Offset.checkSumAdjustment, Offset.magicNumber};
+  /**
+   * The ranges to use for checksum calculation.
+   */
+  private static final int[] CHECKSUM_RANGES = 
+    new int[] {0, Offset.checkSumAdjustment.offset, Offset.magicNumber.offset};
+  
+  /**
+   * Offsets to specific elements in the underlying data. These offsets are relative to the
+   * start of the table or the start of sub-blocks within the table.
+   */
+  private enum Offset {
+    tableVersion(0),
+    fontRevision(4),
+    checkSumAdjustment(8),
+    magicNumber(12),
+    flags(16),
+    unitsPerEm(18),
+    created(20),
+    modified(28),
+    xMin(36),
+    yMin(38),
+    xMax(40),
+    yMax(42),
+    macStyle(44),
+    lowestRecPPEM(46),
+    fontDirectionHint(48),
+    indexToLocFormat(50),
+    glyphDataFormat(52);
 
-  /** Offsets to specific elements in the underlying data, relative to the start of the table. */
-  private interface Offset {
-    int tableVersion = 0;
-    int fontRevision = 4;
-    int checkSumAdjustment = 8;
-    int magicNumber = 12;
-    int flags = 16;
-    int unitsPerEm = 18;
-    int created = 20;
-    int modified = 28;
-    int xMin = 36;
-    int yMin = 38;
-    int xMax = 40;
-    int yMax = 42;
-    int macStyle = 44;
-    int lowestRecPPEM = 46;
-    int fontDirectionHint = 48;
-    int indexToLocFormat = 50;
-    int glyphDataFormat = 52;
-  }
-
-  private FontHeaderTable(Header header, ReadableFontData data) {
-    super(header, data);
-    data.setCheckSumRanges(0, Offset.checkSumAdjustment, Offset.magicNumber);
-  }
-
-  public int tableVersion() {
-    return data.readFixed(Offset.tableVersion);
-  }
-
-  public int fontRevision() {
-    return data.readFixed(Offset.fontRevision);
+    private final int offset;
+    
+    private Offset(int offset) {
+      this.offset = offset;
+    }
   }
 
   /**
-   * Get the checksum adjustment. To compute: set it to 0, sum the entire font as ULONG, then store
-   * 0xB1B0AFBA - sum.
+   * Constructor.
+   *
+   * @param header the table header
+   * @param data the readable data for the table
+   */
+  private FontHeaderTable(Header header, ReadableFontData data) {
+    super(header, data);
+    data.setCheckSumRanges(0, Offset.checkSumAdjustment.offset, Offset.magicNumber.offset);
+  }
+
+  /**
+   * Get the table version.
+   *
+   * @return the table version
+   */
+  public int tableVersion() {
+    return this.data.readFixed(Offset.tableVersion.offset);
+  }
+
+  /**
+   * Get the font revision.
+   *
+   * @return the font revision
+   */
+  public int fontRevision() {
+    return this.data.readFixed(Offset.fontRevision.offset);
+  }
+
+  /**
+   * Get the checksum adjustment. To compute: set it to 0, sum the entire font
+   * as ULONG, then store 0xB1B0AFBA - sum.
+   *
+   * @return checksum adjustment
    */
   public long checkSumAdjustment() {
-    return data.readULong(Offset.checkSumAdjustment);
+    return this.data.readULong(Offset.checkSumAdjustment.offset);
   }
 
-  /** Get the magic number. Set to 0x5F0F3CF5. */
+  /**
+   * Get the magic number. Set to 0x5F0F3CF5.
+   *
+   * @return the magic number
+   */
   public long magicNumber() {
-    return data.readULong(Offset.magicNumber);
+    return this.data.readULong(Offset.magicNumber.offset);
   }
 
-  /** Flag values in the font header table. */
+  /**
+   * Flag values in the font header table.
+   *
+   */
   public enum Flags {
     BaselineAtY0,
     LeftSidebearingAtX0,
     InstructionsDependOnPointSize,
     ForcePPEMToInteger,
     InstructionsAlterAdvanceWidth,
-    // Apple Flags
+    //Apple Flags
     Apple_Vertical,
     Apple_Zero,
     Apple_RequiresLayout,
@@ -115,7 +152,7 @@ public final class FontHeaderTable extends Table {
     Reserved15;
 
     public int mask() {
-      return 1 << ordinal();
+      return 1 << this.ordinal();
     }
 
     public static EnumSet<Flags> asSet(int value) {
@@ -128,7 +165,7 @@ public final class FontHeaderTable extends Table {
       return set;
     }
 
-    public static int value(EnumSet<Flags> set) {
+    static public int value(EnumSet<Flags> set) {
       int value = 0;
       for (Flags flag : set) {
         value |= flag.mask();
@@ -136,59 +173,101 @@ public final class FontHeaderTable extends Table {
       return value;
     }
 
-    public static int cleanValue(EnumSet<Flags> set) {
+    static public int cleanValue(EnumSet<Flags> set) {
       EnumSet<Flags> clean = EnumSet.copyOf(set);
-      clean.remove(Reserved14);
-      clean.remove(Reserved15);
+      clean.remove(Flags.Reserved14);
+      clean.remove(Flags.Reserved15);
       return value(clean);
     }
   }
 
-  /** @see #flags() */
+  /**
+   * Get the flags as an int value.
+   *
+   * @return the flags
+   */
   public int flagsAsInt() {
-    return data.readUShort(Offset.flags);
+    return this.data.readUShort(Offset.flags.offset);
   }
 
-  /** @see #flagsAsInt() */
+  /**
+   * Get the flags as an enum set.
+   *
+   * @return the enum set of the flags
+   */
   public EnumSet<Flags> flags() {
-    return Flags.asSet(flagsAsInt());
+    return Flags.asSet(this.flagsAsInt());
   }
 
+  /**
+   * Get the units per em.
+   *
+   * @return the units per em
+   */
   public int unitsPerEm() {
-    return data.readUShort(Offset.unitsPerEm);
+    return this.data.readUShort(Offset.unitsPerEm.offset);
   }
 
-  /** Get the created date. Number of seconds since 12:00 midnight, January 1, 1904. */
+  /**
+   * Get the created date. Number of seconds since 12:00 midnight, January 1,
+   * 1904. 64-bit integer.
+   *
+   * @return created date
+   */
   public long created() {
-    return data.readDateTimeAsLong(Offset.created);
+    return this.data.readDateTimeAsLong(Offset.created.offset);
   }
 
-  /** Get the modified date. Number of seconds since 12:00 midnight, January 1, 1904. */
+  /**
+   * Get the modified date. Number of seconds since 12:00 midnight, January 1,
+   * 1904. 64-bit integer.
+   *
+   * @return created date
+   */
   public long modified() {
-    return data.readDateTimeAsLong(Offset.modified);
+    return this.data.readDateTimeAsLong(Offset.modified.offset);
   }
 
-  /** Get the x min. For all glyph bounding boxes. */
+  /**
+   * Get the x min. For all glyph bounding boxes.
+   *
+   * @return the x min
+   */
   public int xMin() {
-    return data.readShort(Offset.xMin);
+    return this.data.readShort(Offset.xMin.offset);
   }
 
-  /** Get the y min. For all glyph bounding boxes. */
+  /**
+   * Get the y min. For all glyph bounding boxes.
+   *
+   * @return the y min
+   */
   public int yMin() {
-    return data.readShort(Offset.yMin);
+    return this.data.readShort(Offset.yMin.offset);
   }
 
-  /** Get the x max. For all glyph bounding boxes. */
+  /**
+   * Get the x max. For all glyph bounding boxes.
+   *
+   * @return the xmax
+   */
   public int xMax() {
-    return data.readShort(Offset.xMax);
+    return this.data.readShort(Offset.xMax.offset);
   }
 
-  /** Get the y max. For all glyph bounding boxes. */
+  /**
+   * Get the y max. For all glyph bounding boxes.
+   *
+   * @return the ymax
+   */
   public int yMax() {
-    return data.readShort(Offset.yMax);
+    return this.data.readShort(Offset.yMax.offset);
   }
 
-  /** Mac style bits set in the font header table. */
+  /**
+   * Mac style bits set in the font header table.
+   *
+   */
   public enum MacStyle {
     Bold,
     Italic,
@@ -208,7 +287,7 @@ public final class FontHeaderTable extends Table {
     Reserved15;
 
     public int mask() {
-      return 1 << ordinal();
+      return 1 << this.ordinal();
     }
 
     public static EnumSet<MacStyle> asSet(int value) {
@@ -235,24 +314,36 @@ public final class FontHeaderTable extends Table {
       return value(clean);
     }
 
-    private static final EnumSet<MacStyle> reserved = EnumSet.range(Reserved7, Reserved15);
+    private static final EnumSet<MacStyle> reserved = 
+      EnumSet.range(MacStyle.Reserved7, MacStyle.Reserved15);
   }
 
-  /** Get the Mac style bits as an int. */
+  /**
+   * Get the Mac style bits as an int.
+   *
+   * @return the Mac style bits
+   */
   public int macStyleAsInt() {
-    return data.readUShort(Offset.macStyle);
+    return this.data.readUShort(Offset.macStyle.offset);
   }
 
-  /** Get the Mac style bits as an enum set. */
+  /**
+   * Get the Mac style bits as an enum set.
+   *
+   * @return the Mac style bits
+   */
   public EnumSet<MacStyle> macStyle() {
-    return MacStyle.asSet(macStyleAsInt());
+    return MacStyle.asSet(this.macStyleAsInt());
   }
 
   public int lowestRecPPEM() {
-    return data.readUShort(Offset.lowestRecPPEM);
+    return this.data.readUShort(Offset.lowestRecPPEM.offset);
   }
 
-  /** Font direction hint values in the font header table. */
+  /**
+   * Font direction hint values in the font header table.
+   *
+   */
   public enum FontDirectionHint {
     FullyMixed(0),
     OnlyStrongLTR(1),
@@ -267,7 +358,7 @@ public final class FontHeaderTable extends Table {
     }
 
     public int value() {
-      return value;
+      return this.value;
     }
 
     public boolean equals(int value) {
@@ -285,11 +376,11 @@ public final class FontHeaderTable extends Table {
   }
 
   public int fontDirectionHintAsInt() {
-    return data.readShort(Offset.fontDirectionHint);
+    return this.data.readShort(Offset.fontDirectionHint.offset);
   }
 
   public FontDirectionHint fontDirectionHint() {
-    return FontDirectionHint.valueOf(fontDirectionHintAsInt());
+    return FontDirectionHint.valueOf(this.fontDirectionHintAsInt());
   }
 
   /**
@@ -302,13 +393,13 @@ public final class FontHeaderTable extends Table {
     longOffset(1);
 
     private final int value;
-
+    
     private IndexToLocFormat(int value) {
       this.value = value;
     }
 
     public int value() {
-      return value;
+      return this.value;
     }
 
     public boolean equals(int value) {
@@ -326,250 +417,264 @@ public final class FontHeaderTable extends Table {
   }
 
   public int indexToLocFormatAsInt() {
-    return data.readShort(Offset.indexToLocFormat);
+    return this.data.readShort(Offset.indexToLocFormat.offset);
   }
 
   public IndexToLocFormat indexToLocFormat() {
-    return IndexToLocFormat.valueOf(indexToLocFormatAsInt());
+    return IndexToLocFormat.valueOf(this.indexToLocFormatAsInt());
   }
 
   public int glyphdataFormat() {
-    return data.readShort(Offset.glyphDataFormat);
+    return this.data.readShort(Offset.glyphDataFormat.offset);
   }
 
   public static class Builder extends TableBasedTableBuilder<FontHeaderTable> {
     private boolean fontChecksumSet = false;
     private long fontChecksum = 0;
-
+    
+    /**
+     * Create a new builder using the header information and data provided.
+     *
+     * @param header the header information
+     * @param data the data holding the table
+     * @return a new builder
+     */
     public static Builder createBuilder(Header header, WritableFontData data) {
       return new Builder(header, data);
     }
-
+    
     protected Builder(Header header, WritableFontData data) {
       super(header, data);
-      data.setCheckSumRanges(0, Offset.checkSumAdjustment, Offset.magicNumber);
+      data.setCheckSumRanges(0, Offset.checkSumAdjustment.offset, Offset.magicNumber.offset);
     }
 
     protected Builder(Header header, ReadableFontData data) {
       super(header, data);
-      data.setCheckSumRanges(CHECKSUM_RANGES);
+      data.setCheckSumRanges(FontHeaderTable.CHECKSUM_RANGES);
     }
 
     @Override
     protected boolean subReadyToSerialize() {
-      if (dataChanged()) {
-        ReadableFontData data = internalReadData();
-        data.setCheckSumRanges(CHECKSUM_RANGES);
+      if (this.dataChanged()) {
+        ReadableFontData data = this.internalReadData();
+        data.setCheckSumRanges(FontHeaderTable.CHECKSUM_RANGES);
       }
-      if (fontChecksumSet) {
-        ReadableFontData data = internalReadData();
-        data.setCheckSumRanges(CHECKSUM_RANGES);
-        long checksumAdjustment = CHECKSUM_ADJUSTMENT_BASE - (fontChecksum + data.checksum());
-        setCheckSumAdjustment(checksumAdjustment);
+      if (this.fontChecksumSet) {
+        ReadableFontData data = this.internalReadData();
+        data.setCheckSumRanges(FontHeaderTable.CHECKSUM_RANGES);
+        long checksumAdjustment = 
+          FontHeaderTable.CHECKSUM_ADJUSTMENT_BASE - (this.fontChecksum + data.checksum());
+        this.setCheckSumAdjustment(checksumAdjustment);
       }
       return super.subReadyToSerialize();
     }
 
     @Override
     protected FontHeaderTable subBuildTable(ReadableFontData data) {
-      return new FontHeaderTable(header(), data);
+      return new FontHeaderTable(this.header(), data);
     }
 
     /**
-     * Sets the font checksum to be used when calculating the the checksum adjustment for the header
-     * table during build time.
-     *
-     * <p>The font checksum is the sum value of all tables but the font header table. If the font
-     * checksum has been set then further setting will be ignored until the font check sum has been
-     * cleared with {@link #clearFontChecksum()}. Most users will never need to set this. It is used
-     * when the font is being built. If set by a client it can interfere with that process.
+     * Sets the font checksum to be used when calculating the the checksum
+     * adjustment for the header table during build time.
+     * 
+     * The font checksum is the sum value of all tables but the font header
+     * table. If the font checksum has been set then further setting will be
+     * ignored until the font check sum has been cleared with
+     * {@link #clearFontChecksum()}. Most users will never need to set this. It
+     * is used when the font is being built. If set by a client it can interfere
+     * with that process.
+     * 
+     * @param checksum
+     *          the font checksum
      */
     public void setFontChecksum(long checksum) {
-      if (fontChecksumSet) {
+      if (this.fontChecksumSet) {
         return;
       }
       this.fontChecksumSet = true;
       this.fontChecksum = checksum;
     }
-
+    
     /**
-     * Clears the font checksum to be used when calculating the the checksum adjustment for the
-     * header table during build time.
-     *
-     * <p>The font checksum is the sum value of all tables but the font header table. If the font
-     * checksum has been set then further setting will be ignored until the font check sum has been
-     * cleared.
+     * Clears the font checksum to be used when calculating the the checksum
+     * adjustment for the header table during build time.
+     * 
+     * The font checksum is the sum value of all tables but the font header
+     * table. If the font checksum has been set then further setting will be
+     * ignored until the font check sum has been cleared.
+     * 
      */
     public void clearFontChecksum() {
       this.fontChecksumSet = false;
     }
 
     public int tableVersion() {
-      return table().tableVersion();
+      return this.table().tableVersion();
     }
 
     public void setTableVersion(int version) {
-      internalWriteData().writeFixed(Offset.tableVersion, version);
+      this.internalWriteData().writeFixed(Offset.tableVersion.offset, version);
     }
 
     public int fontRevision() {
-      return table().fontRevision();
+      return this.table().fontRevision();
     }
 
     public void setFontRevision(int revision) {
-      internalWriteData().writeFixed(Offset.fontRevision, revision);
+      this.internalWriteData().writeFixed(Offset.fontRevision.offset, revision);
     }
 
     public long checkSumAdjustment() {
-      return table().checkSumAdjustment();
+      return this.table().checkSumAdjustment();
     }
 
     public void setCheckSumAdjustment(long adjustment) {
-      internalWriteData().writeULong(Offset.checkSumAdjustment, adjustment);
+      this.internalWriteData().writeULong(Offset.checkSumAdjustment.offset, adjustment);
     }
 
     public long magicNumber() {
-      return table().magicNumber();
+      return this.table().magicNumber();
     }
 
     public void setMagicNumber(long magicNumber) {
-      internalWriteData().writeULong(Offset.magicNumber, magicNumber);
+      this.internalWriteData().writeULong(Offset.magicNumber.offset, magicNumber);
     }
 
     public int flagsAsInt() {
-      return table().flagsAsInt();
+      return this.table().flagsAsInt();
     }
 
     public EnumSet<Flags> flags() {
-      return table().flags();
+      return this.table().flags();
     }
 
     public void setFlagsAsInt(int flags) {
-      internalWriteData().writeUShort(Offset.flags, flags);
+      this.internalWriteData().writeUShort(Offset.flags.offset, flags);
     }
-
+    
     public void setFlags(EnumSet<Flags> flags) {
       setFlagsAsInt(Flags.cleanValue(flags));
     }
 
     public int unitsPerEm() {
-      return table().unitsPerEm();
+      return this.table().unitsPerEm();
     }
 
     public void setUnitsPerEm(int units) {
-      internalWriteData().writeUShort(Offset.unitsPerEm, units);
+      this.internalWriteData().writeUShort(Offset.unitsPerEm.offset, units);
     }
 
     public long created() {
-      return table().created();
+      return this.table().created();
     }
 
     public void setCreated(long date) {
-      internalWriteData().writeDateTime(Offset.created, date);
+      this.internalWriteData().writeDateTime(Offset.created.offset, date);
     }
 
     public long modified() {
-      return table().modified();
+      return this.table().modified();
     }
 
     public void setModified(long date) {
-      internalWriteData().writeDateTime(Offset.modified, date);
+      this.internalWriteData().writeDateTime(Offset.modified.offset, date);
     }
 
     public int xMin() {
-      return table().xMin();
+      return this.table().xMin();
     }
 
     public void setXMin(int xmin) {
-      internalWriteData().writeShort(Offset.xMin, xmin);
+      this.internalWriteData().writeShort(Offset.xMin.offset, xmin);
     }
 
     public int yMin() {
-      return table().yMin();
+      return this.table().yMin();
     }
 
     public void setYMin(int ymin) {
-      internalWriteData().writeShort(Offset.yMin, ymin);
+      this.internalWriteData().writeShort(Offset.yMin.offset, ymin);
     }
 
     public int xMax() {
-      return table().xMax();
+      return this.table().xMax();
     }
 
     public void setXMax(int xmax) {
-      internalWriteData().writeShort(Offset.xMax, xmax);
+      this.internalWriteData().writeShort(Offset.xMax.offset, xmax);
     }
 
     public int yMax() {
-      return table().yMax();
+      return this.table().yMax();
     }
 
     public void setYMax(int ymax) {
-      internalWriteData().writeShort(Offset.yMax, ymax);
+      this.internalWriteData().writeShort(Offset.yMax.offset, ymax);
     }
 
     public int macStyleAsInt() {
-      return table().macStyleAsInt();
+      return this.table().macStyleAsInt();
     }
 
     public void setMacStyleAsInt(int style) {
-      internalWriteData().writeUShort(Offset.macStyle, style);
+      this.internalWriteData().writeUShort(Offset.macStyle.offset, style);
     }
 
     public EnumSet<MacStyle> macStyle() {
-      return table().macStyle();
+      return this.table().macStyle();
     }
 
     public void macStyle(EnumSet<MacStyle> style) {
-      setMacStyleAsInt(MacStyle.cleanValue(style));
+      this.setMacStyleAsInt(MacStyle.cleanValue(style));
     }
 
     public int lowestRecPPEM() {
-      return table().lowestRecPPEM();
+      return this.table().lowestRecPPEM();
     }
 
     public void setLowestRecPPEM(int size) {
-      internalWriteData().writeUShort(Offset.lowestRecPPEM, size);
+      this.internalWriteData().writeUShort(Offset.lowestRecPPEM.offset, size);
     }
 
     public int fontDirectionHintAsInt() {
-      return table().fontDirectionHintAsInt();
+      return this.table().fontDirectionHintAsInt();
     }
 
     public void setFontDirectionHintAsInt(int hint) {
-      internalWriteData().writeShort(Offset.fontDirectionHint, hint);
+      this.internalWriteData().writeShort(Offset.fontDirectionHint.offset, hint);
     }
 
     public FontDirectionHint fontDirectionHint() {
-      return table().fontDirectionHint();
+      return this.table().fontDirectionHint();
     }
 
     public void setFontDirectionHint(FontDirectionHint hint) {
-      setFontDirectionHintAsInt(hint.value());
+      this.setFontDirectionHintAsInt(hint.value());
     }
 
     public int indexToLocFormatAsInt() {
-      return table().indexToLocFormatAsInt();
+      return this.table().indexToLocFormatAsInt();
     }
 
     public void setIndexToLocFormatAsInt(int format) {
-      internalWriteData().writeShort(Offset.indexToLocFormat, format);
+      this.internalWriteData().writeShort(Offset.indexToLocFormat.offset, format);
     }
 
     public IndexToLocFormat indexToLocFormat() {
-      return table().indexToLocFormat();
+      return this.table().indexToLocFormat();
     }
 
     public void setIndexToLocFormat(IndexToLocFormat format) {
-      setIndexToLocFormatAsInt(format.value());
+      this.setIndexToLocFormatAsInt(format.value());
     }
 
     public int glyphdataFormat() {
-      return table().glyphdataFormat();
+      return this.table().glyphdataFormat();
     }
 
     public void setGlyphdataFormat(int format) {
-      internalWriteData().writeShort(Offset.glyphDataFormat, format);
+      this.internalWriteData().writeShort(Offset.glyphDataFormat.offset, format);
     }
   }
 }

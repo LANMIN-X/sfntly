@@ -21,17 +21,16 @@ import java.io.OutputStream;
 
 /**
  * A fixed size memory implementation of the ByteArray interface.
- *
+ * 
  * @author Stuart Gill
  */
-final class MemoryByteArray extends ByteArray {
+final class MemoryByteArray extends ByteArray<MemoryByteArray> {
 
   private byte[] b;
 
   /**
-   * Construct a new MemoryByteArray with a new array of the size given. It is assumed that none of
-   * the array is filled and readable.
-   *
+   * Construct a new MemoryByteArray with a new array of the size given. It is assumed
+   * that none of the array is filled and readable.
    * @param length the length to make the storage array
    */
   public MemoryByteArray(int length) {
@@ -39,9 +38,10 @@ final class MemoryByteArray extends ByteArray {
   }
 
   /**
-   * Construct a new MemoryByteArray to wrap the actual underlying byte array. This MemoryByteArray
-   * takes ownership of the array after construction and it should not be used outside of this
-   * object. It is assumed that the entire array is filled and readable.
+   * Construct a new MemoryByteArray to wrap the actual underlying byte array.
+   * This MemoryByteArray takes ownership of the array after construction and it
+   * should not be used outside of this object. It is assumed that the entire
+   * array is filled and readable.
    *
    * @param b the byte array that provides the actual storage
    */
@@ -50,13 +50,14 @@ final class MemoryByteArray extends ByteArray {
   }
 
   /**
-   * Construct a new MemoryByteArray to wrap the actual underlying byte array. This MemoryByteArray
-   * takes ownership of the array after construction and it should not be used outside of this
-   * object.
+   * Construct a new MemoryByteArray to wrap the actual underlying byte array.
+   * This MemoryByteArray takes ownership of the array after construction and it
+   * should not be used outside of this object.
    *
    * @param b the byte array that provides the actual storage
    * @param filledLength the index of the last byte in the array has data
-   * @throws IndexOutOfBoundsException if the given bounds don't fit within the byte array given
+   * @throws IndexOutOfBoundsException if the given bounds don't fit within the
+   *         byte array given
    */
   public MemoryByteArray(byte[] b, int filledLength) {
     super(filledLength, b.length);
@@ -76,7 +77,7 @@ final class MemoryByteArray extends ByteArray {
 
   @Override
   protected int internalGet(int index) {
-    return b[index];
+    return this.b[index];
   }
 
   @Override
@@ -87,10 +88,10 @@ final class MemoryByteArray extends ByteArray {
 
   @Override
   public void close() {
-
+   
     this.b = null;
   }
-
+  
   @Override
   public int copyTo(OutputStream os, int offset, int length) throws IOException {
     os.write(b, offset, length);

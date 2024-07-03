@@ -69,8 +69,7 @@ public class GlyphIds extends OffsetRecordTable<NumRecordTable> {
     }
 
     @Override
-    protected VisibleSubTable.Builder<NumRecordTable> createSubTableBuilder(
-        NumRecordTable subTable) {
+    protected VisibleSubTable.Builder<NumRecordTable> createSubTableBuilder(NumRecordTable subTable) {
       return new NumRecordTable.Builder(subTable);
     }
   }

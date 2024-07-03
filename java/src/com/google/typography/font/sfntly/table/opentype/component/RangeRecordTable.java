@@ -44,6 +44,7 @@ public class RangeRecordTable extends RecordsTable<RangeRecord> {
     }
 
     @Override
-    protected void initFields() {}
+    protected void initFields() {
+    }
   }
 }

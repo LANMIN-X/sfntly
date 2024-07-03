@@ -3,10 +3,13 @@
 package com.google.typography.font.sfntly.table.opentype;
 
 import com.google.typography.font.sfntly.Tag;
+
 import java.util.HashMap;
 import java.util.Map;
 
-/** @author dougfelt@google.com (Doug Felt) */
+/**
+ * @author dougfelt@google.com (Doug Felt)
+ */
 enum FeatureTag {
   aalt("Access All Alternates"),
   abvf("Above-base Forms"),
@@ -170,7 +173,7 @@ enum FeatureTag {
   public static FeatureTag forTagValue(int value) {
     synchronized (FeatureTag.class) {
       if (tagMap == null) {
-        Map<Integer, FeatureTag> map = new HashMap<>();
+        Map<Integer, FeatureTag> map = new HashMap<Integer, FeatureTag>();
         for (FeatureTag tag : values()) {
           map.put(tag.tag(), tag);
         }

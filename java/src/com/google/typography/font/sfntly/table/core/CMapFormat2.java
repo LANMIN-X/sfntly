@@ -3,65 +3,68 @@ package com.google.typography.font.sfntly.table.core;
 import com.google.typography.font.sfntly.data.FontData;
 import com.google.typography.font.sfntly.data.ReadableFontData;
 import com.google.typography.font.sfntly.data.WritableFontData;
+import com.google.typography.font.sfntly.table.core.CMapTable.CMapId;
+import com.google.typography.font.sfntly.table.core.CMapTable.Offset;
+
 import java.util.Iterator;
 
 /**
- * The cmap format 2 subtable maps multi-byte character codes to glyph IDs.
+ * A cmap format 2 sub table.
  *
- * <p>This format is typically used for encodings such as SJIS, EUC-JP/KR/CN, Big5, etc.
- *
- * @see "ISO/IEC 14496-22:2015, section 5.2.1.3.2"
+ * The format 2 cmap is used for multi-byte encodings such as SJIS,
+ * EUC-JP/KR/CN, Big5, etc.
  */
 public final class CMapFormat2 extends CMap {
 
-  private interface Header {
-    int format = 0;
-    int length = 2;
-    int language = 4;
-    int subHeaderKeys = 6;
-  }
-
-  private interface SubHeader {
-    int firstCode = 0;
-    int entryCount = 2;
-    int idDelta = 4;
-    int idRangeOffset = 6;
-  }
-
-  protected CMapFormat2(ReadableFontData data, CMapTable.CMapId cmapId) {
-    super(data, CMap.CMapFormat.Format2.value, cmapId);
+  protected CMapFormat2(ReadableFontData data, CMapId cmapId) {
+    super(data, CMapFormat.Format2.value, cmapId);
   }
 
   private int subHeaderOffset(int subHeaderIndex) {
-    return data.readUShort(Header.subHeaderKeys + subHeaderIndex * FontData.SizeOf.USHORT);
+    int subHeaderOffset = this.data.readUShort(
+        Offset.format2SubHeaderKeys.offset + subHeaderIndex * FontData.DataSize.USHORT.size());
+    return subHeaderOffset;
   }
 
   private int firstCode(int subHeaderIndex) {
     int subHeaderOffset = subHeaderOffset(subHeaderIndex);
-    return data.readUShort(Header.subHeaderKeys + subHeaderOffset + SubHeader.firstCode);
+    int firstCode =
+        this.data.readUShort(subHeaderOffset + Offset.format2SubHeaderKeys.offset
+            + Offset.format2SubHeader_firstCode.offset);
+    return firstCode;
   }
 
   private int entryCount(int subHeaderIndex) {
     int subHeaderOffset = subHeaderOffset(subHeaderIndex);
-    return data.readUShort(Header.subHeaderKeys + subHeaderOffset + SubHeader.entryCount);
+    int entryCount =
+        this.data.readUShort(subHeaderOffset + Offset.format2SubHeaderKeys.offset
+            + Offset.format2SubHeader_entryCount.offset);
+    return entryCount;
   }
 
   private int idRangeOffset(int subHeaderIndex) {
     int subHeaderOffset = subHeaderOffset(subHeaderIndex);
-    return data.readUShort(Header.subHeaderKeys + subHeaderOffset + SubHeader.idRangeOffset);
+    int idRangeOffset = this.data.readUShort(subHeaderOffset + Offset.format2SubHeaderKeys.offset
+        + Offset.format2SubHeader_idRangeOffset.offset);
+    return idRangeOffset;
   }
 
   private int idDelta(int subHeaderIndex) {
     int subHeaderOffset = subHeaderOffset(subHeaderIndex);
-    return data.readShort(Header.subHeaderKeys + subHeaderOffset + SubHeader.idDelta);
+    int idDelta =
+        this.data.readShort(subHeaderOffset + Offset.format2SubHeaderKeys.offset
+            + Offset.format2SubHeader_idDelta.offset);
+    return idDelta;
   }
 
   /**
-   * Returns how many bytes would be consumed by a lookup of this character with this cmap. This
-   * comes about because the cmap format 2 table is designed around multi-byte encodings such as
-   * SJIS, EUC-JP, Big5, etc.
+   * Returns how many bytes would be consumed by a lookup of this character
+   * with this cmap. This comes about because the cmap format 2 table is
+   * designed around multi-byte encodings such as SJIS, EUC-JP, Big5, etc.
    *
-   * @return the number of bytes consumed from this "character" - either 1 or 2
+   * @param character
+   * @return the number of bytes consumed from this "character" - either 1 or
+   *         2
    */
   public int bytesConsumed(int character) {
     int highByte = (character >> 8) & 0xff;
@@ -100,11 +103,9 @@ public final class CMapFormat2 extends CMap {
 
     // position of idRangeOffset + value of idRangeOffset + index for low byte
     // = firstcode
-    int pLocation =
-        (offset + SubHeader.idRangeOffset)
-            + idRangeOffset
-            + (lowByte - firstCode) * FontData.SizeOf.USHORT;
-    int p = data.readUShort(pLocation);
+    int pLocation = (offset + Offset.format2SubHeader_idRangeOffset.offset) + idRangeOffset
+        + (lowByte - firstCode) * FontData.DataSize.USHORT.size();
+    int p = this.data.readUShort(pLocation);
     if (p == 0) {
       return CMapTable.NOTDEF;
     }
@@ -118,32 +119,30 @@ public final class CMapFormat2 extends CMap {
 
   @Override
   public int language() {
-    return data.readUShort(Header.language);
+    return this.data.readUShort(Offset.format2Language.offset);
   }
 
   @Override
   public Iterator<Integer> iterator() {
-    return new CharacterRangeIterator(0, 0x10000);
+    return new CharacterIterator(0, 0xffff);
   }
 
   public static class Builder extends CMap.Builder<CMapFormat2> {
-    protected Builder(WritableFontData data, int offset, CMapTable.CMapId cmapId) {
-      super(
-          data == null ? null : data.slice(offset, data.readUShort(offset + Header.length)),
-          CMap.CMapFormat.Format2,
+    protected Builder(WritableFontData data, int offset, CMapId cmapId) {
+      super(data == null ? null : data.slice(
+          offset, data.readUShort(offset + Offset.format2Length.offset)), CMapFormat.Format2,
           cmapId);
     }
 
-    protected Builder(ReadableFontData data, int offset, CMapTable.CMapId cmapId) {
-      super(
-          data == null ? null : data.slice(offset, data.readUShort(offset + Header.length)),
-          CMap.CMapFormat.Format2,
+    protected Builder(ReadableFontData data, int offset, CMapId cmapId) {
+      super(data == null ? null : data.slice(
+          offset, data.readUShort(offset + Offset.format2Length.offset)), CMapFormat.Format2,
           cmapId);
     }
 
     @Override
     protected CMapFormat2 subBuildTable(ReadableFontData data) {
-      return new CMapFormat2(data, cmapId());
+      return new CMapFormat2(data, this.cmapId());
     }
   }
 }

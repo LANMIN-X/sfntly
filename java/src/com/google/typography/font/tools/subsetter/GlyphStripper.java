@@ -16,7 +16,6 @@
 
 package com.google.typography.font.tools.subsetter;
 
-import com.google.typography.font.sfntly.data.FontData;
 import com.google.typography.font.sfntly.data.ReadableFontData;
 import com.google.typography.font.sfntly.data.WritableFontData;
 import com.google.typography.font.sfntly.table.truetype.CompositeGlyph;
@@ -26,7 +25,7 @@ import com.google.typography.font.sfntly.table.truetype.SimpleGlyph;
 
 /**
  * Strip the hints from one glyph.
- *
+ * 
  * @author Raph Levien
  */
 public class GlyphStripper {
@@ -45,6 +44,8 @@ public class GlyphStripper {
           break;
         case Composite:
           newGlyphData = stripCompositeGlyph(glyph);
+          break;
+        default:
           break;
       }
     }
@@ -69,26 +70,21 @@ public class GlyphStripper {
     SimpleGlyph simpleGlyph = (SimpleGlyph) glyph;
     ReadableFontData originalGlyfData = glyph.readFontData();
 
-    int dataWritten = writeHeaderAndContoursSize(newGlyf, 0, originalGlyfData, 0, simpleGlyph);
+    int dataWritten =
+        writeHeaderAndContoursSize(newGlyf, 0, originalGlyfData, 0, simpleGlyph);
     dataWritten += writeZeroInstructionLength(newGlyf, dataWritten);
     dataWritten +=
-        writeEndSimpleGlyph(
-            newGlyf,
-            dataWritten,
-            originalGlyfData,
-            dataWritten + (simpleGlyph.instructionSize() * FontData.SizeOf.BYTE),
-            size - dataWritten);
+        writeEndSimpleGlyph(newGlyf, dataWritten, originalGlyfData, dataWritten
+            + (simpleGlyph.instructionSize() * ReadableFontData.DataSize.BYTE.size()), size
+            - dataWritten);
     return newGlyf;
   }
 
-  private int writeHeaderAndContoursSize(
-      WritableFontData newGlyf,
-      int newGlyfOffset,
-      ReadableFontData originalGlyfData,
-      int glyphOffset,
-      SimpleGlyph simpleGlyph) {
+  private int writeHeaderAndContoursSize(WritableFontData newGlyf, int newGlyfOffset,
+      ReadableFontData originalGlyfData, int glyphOffset, SimpleGlyph simpleGlyph) {
     int headerAndNumberOfContoursSize =
-        (FontData.SizeOf.SHORT * 5) + (simpleGlyph.numberOfContours() * FontData.SizeOf.USHORT);
+        (ReadableFontData.DataSize.SHORT.size() * 5)
+            + (simpleGlyph.numberOfContours() * ReadableFontData.DataSize.USHORT.size());
     WritableFontData newGlyfSlice = newGlyf.slice(newGlyfOffset, headerAndNumberOfContoursSize);
 
     originalGlyfData.slice(glyphOffset, headerAndNumberOfContoursSize).copyTo(newGlyfSlice);
@@ -97,15 +93,11 @@ public class GlyphStripper {
 
   private int writeZeroInstructionLength(WritableFontData newGlyf, int offset) {
     newGlyf.writeUShort(offset, 0);
-    return FontData.SizeOf.USHORT;
+    return ReadableFontData.DataSize.USHORT.size();
   }
 
-  private int writeEndSimpleGlyph(
-      WritableFontData newGlyf,
-      int newGlyfOffset,
-      ReadableFontData originalGlyfData,
-      int glyphOffset,
-      int length) {
+  private int writeEndSimpleGlyph(WritableFontData newGlyf, int newGlyfOffset,
+      ReadableFontData originalGlyfData, int glyphOffset, int length) {
     ReadableFontData originalGlyfSlice = originalGlyfData.slice(glyphOffset, length);
     WritableFontData newGlyfSlice = newGlyf.slice(newGlyfOffset, length);
 
@@ -127,24 +119,24 @@ public class GlyphStripper {
   }
 
   private void overrideCompositeGlyfFlags(WritableFontData slice, int dataLength) {
-    int index = 5 * FontData.SizeOf.USHORT;
+    int index = 5 * ReadableFontData.DataSize.USHORT.size();
     int flags = CompositeGlyph.FLAG_MORE_COMPONENTS;
     while ((flags & CompositeGlyph.FLAG_MORE_COMPONENTS) != 0) {
       flags = slice.readUShort(index);
       flags &= ~CompositeGlyph.FLAG_WE_HAVE_INSTRUCTIONS;
       slice.writeUShort(index, flags);
-      index += 2 * FontData.SizeOf.USHORT;
+      index += 2 * ReadableFontData.DataSize.USHORT.size();
       if ((flags & CompositeGlyph.FLAG_ARG_1_AND_2_ARE_WORDS) != 0) {
-        index += 2 * FontData.SizeOf.SHORT;
+        index += 2 * ReadableFontData.DataSize.SHORT.size();
       } else {
-        index += 2 * FontData.SizeOf.BYTE;
+        index += 2 * ReadableFontData.DataSize.BYTE.size();
       }
       if ((flags & CompositeGlyph.FLAG_WE_HAVE_A_SCALE) != 0) {
-        index += FontData.SizeOf.F2DOT14;
+        index += ReadableFontData.DataSize.F2DOT14.size();
       } else if ((flags & CompositeGlyph.FLAG_WE_HAVE_AN_X_AND_Y_SCALE) != 0) {
-        index += 2 * FontData.SizeOf.F2DOT14;
+        index += 2 * ReadableFontData.DataSize.F2DOT14.size();
       } else if ((flags & CompositeGlyph.FLAG_WE_HAVE_A_TWO_BY_TWO) != 0) {
-        index += 4 * FontData.SizeOf.F2DOT14;
+        index += 4 * ReadableFontData.DataSize.F2DOT14.size();
       }
     }
   }
@@ -164,7 +156,7 @@ public class GlyphStripper {
   }
 
   private int computeInstructionsSize(SimpleGlyph simpleGlyph) {
-    return simpleGlyph.instructionSize() * FontData.SizeOf.BYTE;
+    return simpleGlyph.instructionSize() * ReadableFontData.DataSize.BYTE.size();
   }
 
   private int computeCompositeStrippedGlyphSize(Glyph glyph) {
@@ -174,8 +166,8 @@ public class GlyphStripper {
 
     if (instructionSize > 0) {
       return nonPaddedCompositeGlyphLength
-          - (instructionSize * FontData.SizeOf.BYTE)
-          - FontData.SizeOf.USHORT;
+          - (instructionSize * ReadableFontData.DataSize.BYTE.size())
+          - ReadableFontData.DataSize.USHORT.size();
     }
     return nonPaddedCompositeGlyphLength;
   }

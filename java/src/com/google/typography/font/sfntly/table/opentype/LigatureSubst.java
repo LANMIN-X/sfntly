@@ -4,6 +4,7 @@ import com.google.typography.font.sfntly.data.ReadableFontData;
 import com.google.typography.font.sfntly.data.WritableFontData;
 import com.google.typography.font.sfntly.table.opentype.ligaturesubst.InnerArrayFmt1;
 import com.google.typography.font.sfntly.table.opentype.ligaturesubst.LigatureSet;
+
 import java.util.Iterator;
 
 public class LigatureSubst extends SubstSubtable implements Iterable<LigatureSet> {
@@ -15,7 +16,7 @@ public class LigatureSubst extends SubstSubtable implements Iterable<LigatureSet
   LigatureSubst(ReadableFontData data, int base, boolean dataIsCanonical) {
     super(data, base, dataIsCanonical);
     if (format != 1) {
-      throw new IllegalStateException("Subst format value is " + format + " (should be 1).");
+      throw new IllegalStateException("Subt format value is " + format + " (should be 1).");
     }
     array = new InnerArrayFmt1(data, headerSize(), dataIsCanonical);
   }
@@ -70,6 +71,8 @@ public class LigatureSubst extends SubstSubtable implements Iterable<LigatureSet
 
     // /////////////////////////////
     // private methods for builders
+
+
 
     // ///////////////////////////////
     // private methods to serialize

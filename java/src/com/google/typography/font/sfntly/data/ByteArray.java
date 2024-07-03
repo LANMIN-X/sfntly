@@ -23,27 +23,36 @@ import java.io.OutputStream;
 /**
  * An abstraction to a contiguous array of bytes.
  *
+ * @param <T> the concrete sub-class of ByteArray
+ *
  * @author Stuart Gill
  */
-abstract class ByteArray {
+abstract class ByteArray<T extends ByteArray<T>> {
   private static final int COPY_BUFFER_SIZE = 8192;
 
-  private final int storageLength;
+  @SuppressWarnings("unused")
+  private boolean bound;
+
+  private int storageLength;
   private int filledLength;
-  private final boolean growable;
+  private boolean growable;
 
   /**
+   * Constructor.
+   * 
    * @param filledLength the length that is "filled" and readable counting from the offset
    * @param storageLength the maximum storage size of the underlying data
    * @param growable is the storage growable - storageLength is the maximum growable size
    */
   protected ByteArray(int filledLength, int storageLength, boolean growable) {
     this.storageLength = storageLength;
-    setFilledLength(filledLength);
+    this.setFilledLength(filledLength);
     this.growable = growable;
   }
 
   /**
+   * Constructor.
+   * 
    * @param filledLength the length that is "filled" and readable counting from the offset
    * @param storageLength the maximum storage size of the underlying data
    */
@@ -53,33 +62,34 @@ abstract class ByteArray {
 
   /**
    * Gets the byte from the given index.
-   *
+   * 
    * @param index the index into the byte array
    * @return the byte or -1 if reading beyond the bounds of the data
    */
   public int get(int index) {
-    if (index < 0 || index >= filledLength) {
+    if (index < 0 || index >= this.filledLength) {
       return -1;
     }
-    return internalGet(index) & 0xff;
+    return this.internalGet(index) & 0xff;
   }
 
   /**
-   * Gets the bytes from the given index and fill the buffer with them. As many bytes as will fit
-   * into the buffer are read unless that would go past the end of the array.
-   *
+   * Gets the bytes from the given index and fill the buffer with them. 
+   * As many bytes as will fit into the buffer are read unless that 
+   * would go past the end of the array.
+   * 
    * @param index the index into the byte array
    * @param b the buffer to put the bytes read into
    * @return the number of bytes read from the buffer
    */
   public int get(int index, byte[] b) {
-    return get(index, b, 0, b.length);
+    return this.get(index, b, 0, b.length);
   }
 
   /**
    * Gets the bytes from the given index and fill the buffer with them starting at the offset given.
    * As many bytes as the specified length are read unless that would go past the end of the array.
-   *
+   * 
    * @param index the index into the byte array
    * @param b the buffer to put the bytes read into
    * @param offset the location in the buffer to start putting the bytes
@@ -87,11 +97,11 @@ abstract class ByteArray {
    * @return the number of bytes read from the buffer
    */
   public int get(int index, byte[] b, int offset, int length) {
-    if (index < 0 || index >= filledLength) {
+    if (index < 0 || index >= this.filledLength) {
       return -1;
     }
-    int actualLength = Math.min(length, filledLength - index);
-    return internalGet(index, b, offset, actualLength);
+    int actualLength = Math.min(length, this.filledLength - index);
+    return this.internalGet(index, b, offset, actualLength);
   }
 
   /**
@@ -100,17 +110,18 @@ abstract class ByteArray {
    * @return the current length
    */
   public int length() {
-    return filledLength;
+    return this.filledLength;
   }
 
   /**
-   * Gets the maximum size of the array. This is the maximum number of bytes that the array can hold
-   * and all of it may not be filled with data or even fully allocated yet.
+   * Gets the maximum size of the array. This is the maximum number of bytes that
+   * the array can hold and all of it may not be filled with data or even fully
+   * allocated yet.
    *
    * @return the size of this array
    */
   public int size() {
-    return storageLength;
+    return this.storageLength;
   }
 
   /**
@@ -119,48 +130,49 @@ abstract class ByteArray {
    * @return true if the array is growable; false otherwise
    */
   public final boolean growable() {
-    return growable;
+    return this.growable;
   }
 
   public int setFilledLength(int filledLength) {
-    this.filledLength = Math.min(filledLength, storageLength);
+    this.filledLength = Math.min(filledLength, this.storageLength);
     return this.filledLength;
   }
 
   /**
-   * Puts the specified byte into the array at the given index unless that would be beyond the
-   * length of the array and it isn't growable.
-   *
+   * Puts the specified byte into the array at the given index unless that would 
+   * be beyond the length of the array and it
+   * isn't growable.
+   * 
    * @param index the index into the byte array
    * @param b the byte to put into the array
    * @throws IndexOutOfBoundsException if attempt to write outside the bounds of the data
    */
   public void put(int index, byte b) {
-    if (index < 0 || index >= size()) {
+    if (index < 0 || index >= this.size()) {
       throw new IndexOutOfBoundsException("Attempt to write outside the bounds of the data.");
     }
-    internalPut(index, b);
-    this.filledLength = Math.max(filledLength, index + 1);
+    this.internalPut(index, b);
+    this.filledLength = Math.max(this.filledLength, index + 1);
   }
 
   /**
-   * Puts the specified bytes into the array at the given index. The entire buffer is put into the
-   * array unless that would extend beyond the length and the array isn't growable.
-   *
+   * Puts the specified bytes into the array at the given index.
+   * The entire buffer is put into the array unless that would
+   * extend beyond the length and the array isn't growable.
    * @param index the index into the byte array
    * @param b the bytes to put into the array
    * @return the number of bytes actually written
    * @throws IndexOutOfBoundsException if the index for writing is outside the bounds of the data
    */
   public int put(int index, byte[] b) {
-    return put(index, b, 0, b.length);
+    return this.put(index, b, 0, b.length);
   }
 
   /**
-   * Puts the specified bytes into the array at the given index. All of the bytes specified are put
-   * into the array unless that would extend beyond the length and the array isn't growable. The
-   * bytes to be put into the array are those in the buffer from the given offset and for the given
-   * length.
+   * Puts the specified bytes into the array at the given index. All of the bytes
+   * specified are put into the array unless that would extend beyond the length
+   * and the array isn't growable. The bytes to be put into the array are those
+   * in the buffer from the given offset and for the given length.
    *
    * @param index the index into the ByteArray
    * @param b the bytes to put into the array
@@ -170,34 +182,37 @@ abstract class ByteArray {
    * @throws IndexOutOfBoundsException if the index for writing is outside the bounds of the data
    */
   public int put(int index, byte[] b, int offset, int length) {
-    if (index < 0 || index >= size()) {
+    if (index < 0 || index >= this.size()) {
       throw new IndexOutOfBoundsException("Attempt to write outside the bounds of the data.");
     }
-    int actualLength = Math.min(length, size() - index);
-    int bytesWritten = internalPut(index, b, offset, actualLength);
-    this.filledLength = Math.max(filledLength, index + bytesWritten);
+    int actualLength = Math.min(length, this.size() - index);
+    int bytesWritten = this.internalPut(index, b, offset, actualLength);
+    this.filledLength = Math.max(this.filledLength, index + bytesWritten);
     return bytesWritten;
   }
 
   /**
-   * Fully copies this ByteArray to another ByteArray to the extent that the destination array has
-   * storage for the data copied.
+   * Fully copies this ByteArray to another ByteArray to the extent that the
+   * destination array has storage for the data copied.
    *
+   * @param array the destination
    * @return the number of bytes copied
    */
-  public int copyTo(ByteArray array) {
-    return copyTo(array, 0, length());
+  public int copyTo(ByteArray<? extends ByteArray<?>> array) {
+    return copyTo(array, 0, this.length());
   }
 
   /**
    * Copies a segment of this ByteArray to another ByteArray.
    *
+   * @param array the destination
    * @param offset the offset in this ByteArray to start copying from
    * @param length the maximum length in bytes to copy
    * @return the number of bytes copied
    */
-  public int copyTo(ByteArray array, int offset, int length) {
-    return copyTo(0, array, offset, length);
+  public int 
+  copyTo(ByteArray<? extends ByteArray<?>> array, int offset, int length) {
+    return this.copyTo(0, array, offset, length);
   }
 
   /**
@@ -209,15 +224,16 @@ abstract class ByteArray {
    * @param length the maximum length in bytes to copy
    * @return the number of bytes copied
    */
-  public int copyTo(int dstOffset, ByteArray array, int srcOffset, int length) {
+  public int copyTo(
+      int dstOffset, ByteArray<? extends ByteArray<?>> array, int srcOffset, int length) {
     byte[] b = new byte[COPY_BUFFER_SIZE];
-    int bytesRead;
+    int bytesRead = 0;
     int index = 0;
     int bufferLength = Math.min(b.length, length);
-    while ((bytesRead = get(index + srcOffset, b, 0, bufferLength)) > 0) {
+    while ((bytesRead = this.get(index + srcOffset, b, 0, bufferLength)) > 0) {
       int bytesWritten = array.put(index + dstOffset, b, 0, bytesRead);
-      index += bytesWritten;
-      length -= bytesWritten;
+      index += bytesRead;
+      length -= bytesRead;
       bufferLength = Math.min(b.length, length);
     }
     return index;
@@ -225,25 +241,29 @@ abstract class ByteArray {
 
   /**
    * Copies this ByteArray to an OutputStream.
-   *
+   * @param os the destination
    * @return the number of bytes copied
+   * @throws IOException
    */
   public int copyTo(OutputStream os) throws IOException {
-    return copyTo(os, 0, length());
+    return this.copyTo(os, 0, this.length());
   }
 
   /**
    * Copies this ByteArray to an OutputStream.
    *
    * @param os the destination
+   * @param offset
+   * @param length
    * @return the number of bytes copied
+   * @throws IOException
    */
   public int copyTo(OutputStream os, int offset, int length) throws IOException {
     byte[] b = new byte[COPY_BUFFER_SIZE];
-    int bytesRead;
+    int bytesRead = 0;
     int index = 0;
     int bufferLength = Math.min(b.length, length);
-    while ((bytesRead = get(index + offset, b, 0, bufferLength)) > 0) {
+    while ((bytesRead = this.get(index + offset, b, 0, bufferLength)) > 0) {
       os.write(b, 0, bytesRead);
       index += bytesRead;
       bufferLength = Math.min(b.length, length - index);
@@ -251,14 +271,20 @@ abstract class ByteArray {
     return index;
   }
 
-  /** Copies from the InputStream into this ByteArray. */
+  /**
+   * Copies from the InputStream into this ByteArray.
+   *
+   * @param is the source
+   * @param length the number of bytes to copy
+   * @throws IOException
+   */
   public void copyFrom(InputStream is, int length) throws IOException {
     byte[] b = new byte[COPY_BUFFER_SIZE];
-    int bytesRead;
+    int bytesRead = 0;
     int index = 0;
     int bufferLength = Math.min(b.length, length);
     while ((bytesRead = is.read(b, 0, bufferLength)) > 0) {
-      if (put(index, b, 0, bytesRead) != bytesRead) {
+      if (this.put(index, b, 0, bytesRead) != bytesRead) {
         throw new IOException("Error writing bytes.");
       }
       index += bytesRead;
@@ -267,14 +293,19 @@ abstract class ByteArray {
     }
   }
 
-  /** Copies everything from the InputStream into this ByteArray. */
+  /**
+   * Copies everything from the InputStream into this ByteArray.
+   *
+   * @param is the source
+   * @throws IOException
+   */
   public void copyFrom(InputStream is) throws IOException {
     byte[] b = new byte[COPY_BUFFER_SIZE];
-    int bytesRead;
+    int bytesRead = 0;
     int index = 0;
     int bufferLength = b.length;
     while ((bytesRead = is.read(b, 0, bufferLength)) > 0) {
-      if (put(index, b, 0, bytesRead) != bytesRead) {
+      if (this.put(index, b, 0, bytesRead) != bytesRead) {
         throw new IOException("Error writing bytes.");
       }
       index += bytesRead;
@@ -323,7 +354,9 @@ abstract class ByteArray {
    */
   protected abstract int internalGet(int index, byte[] b, int offset, int length);
 
-  /** Close this instance of the ByteArray. */
+  /**
+   * Close this instance of the ByteArray.
+   */
   public abstract void close();
 
   /**
@@ -334,55 +367,31 @@ abstract class ByteArray {
    */
   public String toString(int offset, int length) {
     if (length == -1) {
-      length = length();
+      length = this.length();
     }
-    length = Math.min(length, length());
+    length = Math.min(length, this.length());
     StringBuilder sb = new StringBuilder();
-    StringBuilder line = new StringBuilder();
 
-    sb.append("[l=" + filledLength + ", s=" + size() + "]");
+    sb.append("[l=" + this.filledLength + ", s=" + this.size() + "]");
     if (length > 0) {
       sb.append("\n");
     }
-    for (int i = 0; i < length; i += 16) {
-      line.setLength(0);
-      int jmax = Math.min(length - i, 16);
-
-      for (int j = 0; j < 16; j++) {
-        if (j < jmax) {
-          int r = get(offset + i + j);
-          line.append("0123456789abcdef".charAt((r >>> 4) & 0x0f));
-          line.append("0123456789abcdef".charAt(r & 0x0f));
-          line.append(" ");
-        } else {
-          line.append("   ");
-        }
-        if (j % 4 == 3) {
-          line.append(" ");
-        }
+    for (int i = 0; i < length; i++) {
+      int r = this.get(i + offset);
+      if (r < 0x10) {
+        sb.append("0");
       }
-      line.append(" ");
-
-      for (int j = 0; j < jmax; j++) {
-        int r = get(offset + i + j);
-        if (0x20 <= r && r <= 0x7e) {
-          line.append((char) r);
-        } else {
-          line.append('.');
-        }
+      sb.append(Integer.toHexString(r));
+      sb.append(" ");
+      if (i > 0 && ((i + 1) % 16) == 0) {
+        sb.append("\n");
       }
-      while (line.length() > 0 && Character.isWhitespace(line.charAt(line.length() - 1))) {
-        line.setLength(line.length() - 1);
-      }
-
-      sb.append(line);
-      sb.append("\n");
     }
     return sb.toString();
   }
 
   @Override
   public String toString() {
-    return toString(0, 0);
+    return this.toString(0, 0);
   }
 }

@@ -19,90 +19,103 @@ package com.google.typography.font.sfntly.table.bitmap;
 import com.google.typography.font.sfntly.data.ReadableFontData;
 import com.google.typography.font.sfntly.data.WritableFontData;
 
-/** @author Stuart Gill */
+/**
+ * @author Stuart Gill
+ */
 public class SmallGlyphMetrics extends GlyphMetrics {
 
-  private interface Offset {
-    int height = 0;
-    int width = 1;
-    int BearingX = 2;
-    int BearingY = 3;
-    int Advance = 4;
-    int SIZE = 5;
-  }
+  static enum Offset {
+    metricsLength(5), height(0), width(1), BearingX(2), BearingY(3), Advance(4);
 
+    final int offset;
+
+    private Offset(int offset) {
+      this.offset = offset;
+    }
+  }
+  
   private SmallGlyphMetrics(ReadableFontData data) {
     super(data);
   }
-
+  
   public int height() {
-    return data.readByte(Offset.height);
+    return this.data.readByte(Offset.height.offset);
   }
-
+  
   public int width() {
-    return data.readByte(Offset.width);
+    return this.data.readByte(Offset.width.offset);
   }
 
   public int bearingX() {
-    return data.readChar(Offset.BearingX);
+    return this.data.readChar(Offset.BearingX.offset);
   }
 
   public int bearingY() {
-    return data.readChar(Offset.BearingY);
+    return this.data.readChar(Offset.BearingY.offset);
   }
 
   public int advance() {
-    return data.readByte(Offset.Advance);
+    return this.data.readByte(Offset.Advance.offset);
   }
 
   public static class Builder extends GlyphMetrics.Builder<SmallGlyphMetrics> {
 
+    /**
+     * Constructor.
+     *
+     * @param data the data for the builder
+     */
     protected Builder(WritableFontData data) {
       super(data);
     }
 
+    /**
+     * Constructor.
+     *
+     * @param data the data for the builder
+     */
     protected Builder(ReadableFontData data) {
       super(data);
     }
 
     public int height() {
-      return internalReadData().readByte(Offset.height);
+      return this.internalReadData().readByte(Offset.height.offset);
     }
 
     public void setHeight(byte height) {
-      internalWriteData().writeByte(Offset.height, height);
+      this.internalWriteData().writeByte(Offset.height.offset, height);
     }
 
     public int width() {
-      return internalReadData().readByte(Offset.width);
+      return this.internalReadData().readByte(Offset.width.offset);
     }
 
     public void setWidth(byte width) {
-      internalWriteData().writeByte(Offset.width, width);
+      this.internalWriteData().writeByte(Offset.width.offset, width);
     }
 
     public int bearingX() {
-      return internalReadData().readChar(Offset.BearingX);
+      return this.internalReadData().readChar(Offset.BearingX.offset);
     }
 
     public void setBearingX(byte bearing) {
-      internalWriteData().writeChar(Offset.BearingX, bearing);
+      this.internalWriteData().writeChar(Offset.BearingX.offset, bearing);
     }
 
     public int bearingY() {
-      return internalReadData().readChar(Offset.BearingY);
+      return this.internalReadData().readChar(Offset.BearingY.offset);
     }
 
     public void setBearingY(byte bearing) {
-      internalWriteData().writeChar(Offset.BearingY, bearing);
+      this.internalWriteData().writeChar(Offset.BearingY.offset, bearing);
     }
 
     public int advance() {
-      return internalReadData().readByte(Offset.Advance);
+      return this.internalReadData().readByte(Offset.Advance.offset);
     }
 
     public void setAdvance(byte advance) {
-      internalWriteData().writeByte(Offset.Advance, advance);
+      this.internalWriteData().writeByte(Offset.Advance.offset, advance);
     }
 
     @Override
@@ -127,7 +140,7 @@ public class SmallGlyphMetrics extends GlyphMetrics {
 
     @Override
     protected int subSerialize(WritableFontData newData) {
-      return data().copyTo(newData);
+      return this.data().copyTo(newData);
     }
   }
 }

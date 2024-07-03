@@ -2,58 +2,50 @@ package com.google.typography.font.sfntly.table.core;
 
 import com.google.typography.font.sfntly.data.ReadableFontData;
 import com.google.typography.font.sfntly.data.WritableFontData;
+import com.google.typography.font.sfntly.table.core.CMapTable.CMapId;
+import com.google.typography.font.sfntly.table.core.CMapTable.Offset;
+
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 /**
- * The cmap format 13 subtable maps ranges of 32-bit character codes to one glyph ID each.
- *
- * @see "ISO/IEC 14496-22:2015, section 5.2.1.3.8"
+ * A cmap format 13 sub table.
  */
 public final class CMapFormat13 extends CMap {
   private final int numberOfGroups;
 
-  private interface Header {
-    int format = 0;
-    int length = 4;
-    int language = 8;
-    int nGroups = 12;
-    int SIZE = 16;
-  }
-
-  private interface Group {
-    int startCharCode = 0;
-    int endCharCode = 4;
-    int glyphId = 8;
-    int SIZE = 12;
-  }
-
-  protected CMapFormat13(ReadableFontData data, CMapTable.CMapId cmapId) {
-    super(data, CMap.CMapFormat.Format12.value, cmapId);
-    this.numberOfGroups = this.data.readULongAsInt(Header.nGroups);
+  protected CMapFormat13(ReadableFontData data, CMapId cmapId) {
+    super(data, CMapFormat.Format12.value, cmapId);
+    this.numberOfGroups = this.data.readULongAsInt(Offset.format12nGroups.offset);
   }
 
   private int groupStartChar(int groupIndex) {
-    return data.readULongAsInt(Header.SIZE + groupIndex * Group.SIZE + Group.startCharCode);
+    return this.data.readULongAsInt(
+        Offset.format13Groups.offset + groupIndex * Offset.format13Groups_structLength.offset
+            + Offset.format13_startCharCode.offset);
   }
 
   private int groupEndChar(int groupIndex) {
-    return data.readULongAsInt(Header.SIZE + groupIndex * Group.SIZE + Group.endCharCode);
+    return this.data.readULongAsInt(
+        Offset.format13Groups.offset + groupIndex * Offset.format13Groups_structLength.offset
+            + Offset.format13_endCharCode.offset);
   }
 
   private int groupGlyph(int groupIndex) {
-    return data.readULongAsInt(Header.SIZE + groupIndex * Group.SIZE + Group.glyphId);
+    return this.data.readULongAsInt(
+        Offset.format13Groups.offset + groupIndex * Offset.format13Groups_structLength.offset
+            + Offset.format13_glyphId.offset);
   }
 
   @Override
   public int glyphId(int character) {
-    int group =
-        data.searchULong(
-            Header.SIZE + Group.startCharCode,
-            Group.SIZE,
-            Header.SIZE + Group.endCharCode,
-            Group.SIZE,
-            numberOfGroups,
-            character);
+    int group = this.data.searchULong(
+        Offset.format13Groups.offset + Offset.format13_startCharCode.offset,
+        Offset.format13Groups_structLength.offset,
+        Offset.format13Groups.offset + Offset.format13_endCharCode.offset,
+        Offset.format13Groups_structLength.offset,
+        this.numberOfGroups,
+        character);
     if (group == -1) {
       return CMapTable.NOTDEF;
     }
@@ -62,7 +54,7 @@ public final class CMapFormat13 extends CMap {
 
   @Override
   public int language() {
-    return data.readULongAsInt(Header.language);
+    return this.data.readULongAsInt(Offset.format12Language.offset);
   }
 
   @Override
@@ -70,40 +62,75 @@ public final class CMapFormat13 extends CMap {
     return new CharacterIterator();
   }
 
-  private class CharacterIterator extends CMap.CharacterRangesIterator {
-    CharacterIterator() {
-      super(numberOfGroups);
+  private final class CharacterIterator implements Iterator<Integer> {
+    private int groupIndex = 0;
+    private int groupEndChar;
+
+    private boolean nextSet = false;
+    private int nextChar;
+
+    private CharacterIterator() {
+      nextChar = groupStartChar(groupIndex);
+      groupEndChar = groupEndChar(groupIndex);
+      nextSet = true;
     }
 
     @Override
-    protected int getRangeStart(int rangeIndex) {
-      return groupStartChar(rangeIndex);
+    public boolean hasNext() {
+      if (nextSet) {
+        return true;
+      }
+      if (groupIndex >= numberOfGroups) {
+        return false;
+      }
+      if (nextChar < groupEndChar) {
+        nextChar++;
+        nextSet = true;
+        return true;
+      }
+      groupIndex++;
+      if (groupIndex < numberOfGroups) {
+        nextSet = true;
+        nextChar = groupStartChar(groupIndex);
+        groupEndChar = groupEndChar(groupIndex);
+        return true;
+      }
+      return false;
     }
 
     @Override
-    protected int getRangeEnd(int rangeIndex) {
-      return groupEndChar(rangeIndex);
+    public Integer next() {
+      if (!this.nextSet) {
+        if (!hasNext()) {
+          throw new NoSuchElementException("No more characters to iterate.");
+        }
+      }
+      this.nextSet = false;
+      return nextChar;
+    }
+
+    @Override
+    public void remove() {
+      throw new UnsupportedOperationException("Unable to remove a character from cmap.");
     }
   }
 
   public static class Builder extends CMap.Builder<CMapFormat13> {
-    protected Builder(WritableFontData data, int offset, CMapTable.CMapId cmapId) {
-      super(
-          data == null ? null : data.slice(offset, data.readULongAsInt(offset + Header.length)),
-          CMap.CMapFormat.Format13,
-          cmapId);
+    protected Builder(WritableFontData data, int offset, CMapId cmapId) {
+      super(data == null ? null : data.slice(
+          offset, data.readULongAsInt(offset + Offset.format13Length.offset)),
+          CMapFormat.Format13, cmapId);
     }
 
-    protected Builder(ReadableFontData data, int offset, CMapTable.CMapId cmapId) {
-      super(
-          data == null ? null : data.slice(offset, data.readULongAsInt(offset + Header.length)),
-          CMap.CMapFormat.Format13,
-          cmapId);
+    protected Builder(ReadableFontData data, int offset, CMapId cmapId) {
+      super(data == null ? null : data.slice(
+          offset, data.readULongAsInt(offset + Offset.format13Length.offset)),
+          CMapFormat.Format13, cmapId);
     }
 
     @Override
     protected CMapFormat13 subBuildTable(ReadableFontData data) {
-      return new CMapFormat13(data, cmapId());
+      return new CMapFormat13(data, this.cmapId());
     }
   }
 }

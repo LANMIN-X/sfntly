@@ -16,38 +16,41 @@
 
 package com.google.typography.font.sfntly.sample.sflint;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-
 import com.google.typography.font.sfntly.Font;
 import com.google.typography.font.sfntly.FontFactory;
 import com.google.typography.font.sfntly.Tag;
 import com.google.typography.font.sfntly.table.core.HorizontalHeaderTable;
 import com.google.typography.font.sfntly.table.core.HorizontalMetricsTable;
 import com.google.typography.font.sfntly.table.core.NameTable;
+import com.google.typography.font.sfntly.table.core.NameTable.NameEntry;
+import com.google.typography.font.sfntly.table.core.NameTable.NameId;
 import com.google.typography.font.sfntly.table.core.OS2Table;
-import com.google.typography.font.sfntly.table.extra.VerticalHeaderTable;
-import com.google.typography.font.sfntly.table.extra.VerticalMetricsTable;
 import com.google.typography.font.sfntly.table.truetype.CompositeGlyph;
 import com.google.typography.font.sfntly.table.truetype.Glyph;
+import com.google.typography.font.sfntly.table.truetype.Glyph.GlyphType;
 import com.google.typography.font.sfntly.table.truetype.GlyphTable;
 import com.google.typography.font.sfntly.table.truetype.LocaTable;
 
-/** @author Raph Levien */
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+
+/**
+ * @author Raph Levien
+ */
 public class SFLint {
 
-  private final FontFactory fontFactory;
+  private FontFactory fontFactory;
   private int problemCount;
 
   public static void main(String[] args) throws IOException {
     SFLint dumper = new SFLint();
     File fontFile = null;
 
-    for (String arg : args) {
+    for (int i = 0; i < args.length; i++) {
       String option = null;
-      if (arg.charAt(0) == '-') {
-        option = arg.substring(1);
+      if (args[i].charAt(0) == '-') {
+        option = args[i].substring(1);
       }
 
       if (option != null) {
@@ -56,7 +59,7 @@ public class SFLint {
           System.exit(0);
         }
       } else {
-        fontFile = new File(arg);
+        fontFile = new File (args[i]);
         break;
       }
     }
@@ -66,7 +69,7 @@ public class SFLint {
     }
   }
 
-  private static void printUsage() {
+  private static final void printUsage() {
     System.out.println("SFLint [-?|-h|-help] fontfile");
     System.out.println("find problems with the font file");
     System.out.println("\t-?,-h,-help\tprint this help information");
@@ -74,13 +77,19 @@ public class SFLint {
 
   public SFLint() {
     fontFactory = FontFactory.getInstance();
-  }
+  }  
 
   public void lintFontFile(File fontFile) throws IOException {
-    try (FileInputStream fis = new FileInputStream(fontFile)) {
+    FileInputStream fis = null;
+    try {
+      fis = new FileInputStream(fontFile);
       Font[] fontArray = fontFactory.loadFonts(fis);
       for (Font font : fontArray) {
         lintFont(font);
+      }
+    } finally {
+      if (fis != null) {
+        fis.close();
       }
     }
   }
@@ -88,33 +97,29 @@ public class SFLint {
   private void lintNameTable(Font font) {
     // Test if name entries are consistent. Logic is adapted from fix_full_font_name in
     // font_optimizer.
-    NameTable name = font.getTable(Tag.name);
-    for (NameTable.NameEntry entry : name) {
+    NameTable name = (NameTable) font.getTable(Tag.name);
+    for (NameEntry entry : name) {
       // System.out.println(entry);
-      if (entry.nameId() == NameTable.NameId.FontFamilyName.value()) {
-        for (NameTable.NameEntry entry2 : name) {
-          if (entry2.nameId() == NameTable.NameId.FullFontName.value()
-              && entry.platformId() == entry2.platformId()
-              && entry.encodingId() == entry2.encodingId()
-              && entry.languageId() == entry2.languageId()) {
+      if (entry.nameId() == NameId.FontFamilyName.value()) {
+        for (NameEntry entry2 : name) {
+          if (entry2.nameId() == NameId.FullFontName.value() &&
+              entry.platformId() == entry2.platformId() &&
+              entry.encodingId() == entry2.encodingId() &&
+              entry.languageId() == entry2.languageId()) {
             if (!entry2.name().startsWith(entry.name())) {
-              reportProblem(
-                  "Full font name doesn't begin with family name: "
-                      + "FontFamilyName = "
-                      + entry.name()
-                      + "; FullFontName = "
-                      + entry2.name());
+              reportProblem("Full font name doesn't begin with family name: " +
+                  "FontFamilyName = " + entry.name() + "; FullFontName = " + entry2.name());
             }
           }
         }
       }
     }
   }
-
+  
   private void lintWindowsClipping(Font font) {
-    LocaTable loca = font.getTable(Tag.loca);
+    LocaTable loca = (LocaTable) font.getTable(Tag.loca);
     int nGlyphs = loca.numGlyphs();
-    GlyphTable glyphTable = font.getTable(Tag.glyf);
+    GlyphTable glyphTable = (GlyphTable) font.getTable(Tag.glyf);
     int bbox_xMin = 0;
     int bbox_yMin = 0;
     int bbox_xMax = 0;
@@ -142,7 +147,7 @@ public class SFLint {
         }
       }
     }
-    OS2Table os2 = font.getTable(Tag.OS_2);
+    OS2Table os2 = (OS2Table) font.getTable(Tag.OS_2);
     if (os2.usWinAscent() < bbox_yMax) {
       reportProblem("font is clipped on top by " + (bbox_yMax - os2.usWinAscent()) + " units");
     }
@@ -150,34 +155,17 @@ public class SFLint {
       reportProblem("font is clipped on bottom by " + (-bbox_yMin - os2.usWinDescent()) + " units");
     }
   }
-  private void lintAdvanceHeights(Font font) {
-	    int maxAdvanceHeight = 0;
-	    VerticalMetricsTable hmtx = font.getTable(Tag.vmtx);
-	    System.out.println(hmtx.numberOfVMetrics());
-	    for (int i = 0; i < hmtx.numberOfVMetrics(); i++) {
-	      int advanceHeight = hmtx.vMetricAdvanceHeight(i);
-	      if (i == 0 || advanceHeight > maxAdvanceHeight) {
-	    	  maxAdvanceHeight = advanceHeight;
-	      }
-	    }
-	    VerticalHeaderTable vhea = font.getTable(Tag.vhea);
-	    int vheaMax = vhea.advanceHeightMax();
-	    if (maxAdvanceHeight != vhea.advanceHeightMax()) {
-	      reportProblem("advanceHeightMax mismatch, expected " + maxAdvanceHeight + " got " + vheaMax);
-	    }
-	  }
-
+  
   private void lintAdvanceWidths(Font font) {
     int maxAdvanceWidth = 0;
-    HorizontalMetricsTable hmtx = font.getTable(Tag.hmtx);
-    System.out.println("hmtx.numberOfHMetrics()" + hmtx.numberOfHMetrics());
+    HorizontalMetricsTable hmtx = (HorizontalMetricsTable) font.getTable(Tag.hmtx);
     for (int i = 0; i < hmtx.numberOfHMetrics(); i++) {
       int advanceWidth = hmtx.hMetricAdvanceWidth(i);
       if (i == 0 || advanceWidth > maxAdvanceWidth) {
         maxAdvanceWidth = advanceWidth;
       }
     }
-    HorizontalHeaderTable hhea = font.getTable(Tag.hhea);
+    HorizontalHeaderTable hhea = (HorizontalHeaderTable) font.getTable(Tag.hhea);
     int hheaMax = hhea.advanceWidthMax();
     if (maxAdvanceWidth != hhea.advanceWidthMax()) {
       reportProblem("advanceWidthMax mismatch, expected " + maxAdvanceWidth + " got " + hheaMax);
@@ -185,47 +173,45 @@ public class SFLint {
   }
 
   private void lintCompositeGlyph(Font font, CompositeGlyph glyph, int glyphId) {
-    int VAR_FLAGS =
-        CompositeGlyph.FLAG_WE_HAVE_A_SCALE
-            | CompositeGlyph.FLAG_WE_HAVE_AN_X_AND_Y_SCALE
-            | CompositeGlyph.FLAG_WE_HAVE_A_TWO_BY_TWO;
-    int MASK =
-        ~(CompositeGlyph.FLAG_MORE_COMPONENTS
-            | CompositeGlyph.FLAG_WE_HAVE_INSTRUCTIONS
-            | CompositeGlyph.FLAG_USE_MY_METRICS);
+    final int VAR_FLAGS = CompositeGlyph.FLAG_WE_HAVE_A_SCALE |
+        CompositeGlyph.FLAG_WE_HAVE_AN_X_AND_Y_SCALE |
+        CompositeGlyph.FLAG_WE_HAVE_A_TWO_BY_TWO;
+    final int MASK = ~(CompositeGlyph.FLAG_MORE_COMPONENTS |
+        CompositeGlyph.FLAG_WE_HAVE_INSTRUCTIONS |
+        CompositeGlyph.FLAG_USE_MY_METRICS);
     for (int i = 0; i < glyph.numGlyphs(); i++) {
       if ((glyph.flags(i) & VAR_FLAGS) == 0) {
         // check for duplicate occurrences of same reference
         for (int j = 0; j < i; j++) {
-          if ((glyph.flags(i) & MASK) == (glyph.flags(j) & MASK)
-              && glyph.glyphIndex(i) == glyph.glyphIndex(j)
-              && glyph.argument1(i) == glyph.argument1(j)
-              && glyph.argument2(i) == glyph.argument2(j)) {
+          if ((glyph.flags(i) & MASK) == (glyph.flags(j) & MASK) &&
+              glyph.glyphIndex(i) == glyph.glyphIndex(j) &&
+              glyph.argument1(i) == glyph.argument1(j) &&
+              glyph.argument2(i) == glyph.argument2(j)) {
             reportProblem("glyph " + glyphId + " contains duplicate references");
           }
-        }
+        } 
       }
     }
   }
-
+  
   private void lintAllGlyphs(Font font) {
-    LocaTable loca = font.getTable(Tag.loca);
-    GlyphTable glyphTable = font.getTable(Tag.glyf);
+    LocaTable loca = (LocaTable) font.getTable(Tag.loca);
+    GlyphTable glyphTable = (GlyphTable) font.getTable(Tag.glyf);
     int nGlyphs = loca.numGlyphs();
     for (int glyphId = 0; glyphId < nGlyphs; glyphId++) {
       int offset = loca.glyphOffset(glyphId);
       int length = loca.glyphLength(glyphId);
       Glyph glyph = glyphTable.glyph(offset, length);
       if (glyph != null) {
-        if (glyph.glyphType() == Glyph.GlyphType.Composite) {
-          lintCompositeGlyph(font, (CompositeGlyph) glyph, glyphId);
+        if (glyph.glyphType() == GlyphType.Composite) {
+          lintCompositeGlyph(font, (CompositeGlyph)glyph, glyphId);
         }
-      }
+      }      
     }
   }
-
+  
   private void lintOS2Misc(Font font) {
-    OS2Table os2 = font.getTable(Tag.OS_2);
+    OS2Table os2 = (OS2Table) font.getTable(Tag.OS_2);
     int widthClass = os2.usWidthClass();
     if (widthClass < 1 || widthClass > 9) {
       reportProblem("widthClass must be [1..9] inclusive, was " + widthClass + "; IE9 fail");
@@ -237,17 +223,16 @@ public class SFLint {
       reportProblem("weightClass must be multiple of 100, was " + weightClass);
     }
   }
-
+  
   private void lintFont(Font font) {
     problemCount = 0;
 
     lintNameTable(font);
     lintWindowsClipping(font);
     lintAdvanceWidths(font);
-    lintAdvanceHeights(font);
     lintAllGlyphs(font);
     lintOS2Misc(font);
-
+    
     if (problemCount == 0) {
       System.out.println("No problems found");
     }
@@ -256,9 +241,11 @@ public class SFLint {
   /**
    * Report a problem. Right now this just prints to stdout, but we'll probably want a more
    * sophisticated reporting approach soon.
+   * 
+   * @param string description of the problem
    */
-  private void reportProblem(String description) {
+  private void reportProblem(String string) {
     problemCount++;
-    System.out.println(description);
+    System.out.println(string);
   }
 }

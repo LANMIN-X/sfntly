@@ -3,9 +3,10 @@ package com.google.typography.font.sfntly.table.truetype;
 import com.google.typography.font.sfntly.data.ReadableFontData;
 import com.google.typography.font.sfntly.data.WritableFontData;
 import com.google.typography.font.sfntly.table.SubTable;
+import com.google.typography.font.sfntly.table.truetype.GlyphTable.Offset;
 
 public abstract class Glyph extends SubTable {
-
+  
   public enum GlyphType {
     Simple,
     Composite;
@@ -27,7 +28,7 @@ public abstract class Glyph extends SubTable {
       this.numberOfContours = 0;
     } else {
       // -1 if composite
-      this.numberOfContours = this.data.readShort(GlyphTable.Offset.numberOfContours);
+      this.numberOfContours = this.data.readShort(Offset.numberOfContours.offset);
     }
   }
 
@@ -39,7 +40,7 @@ public abstract class Glyph extends SubTable {
       this.numberOfContours = 0;
     } else {
       // -1 if composite
-      this.numberOfContours = this.data.readShort(GlyphTable.Offset.numberOfContours);
+      this.numberOfContours = this.data.readShort(Offset.numberOfContours.offset);
     }
   }
 
@@ -57,18 +58,19 @@ public abstract class Glyph extends SubTable {
     return GlyphType.Composite;
   }
 
-  //  @SuppressWarnings("unchecked")
-  //  static <T extends Glyph> T getGlyph(
-  //      GlyphTable table, ReadableFontData data, int offset, int length) {
-  //    Glyph.GlyphType type = Glyph.glyphType(data, offset, length);
-  //    if (type == GlyphType.Simple) {
-  //      return (T) new SimpleGlyph(data, offset, length);
-  //    }
-  //    return (T) new CompositeGlyph(data, offset, length);
-  //  }
+//  @SuppressWarnings("unchecked")
+//  static <T extends Glyph> T getGlyph(
+//      GlyphTable table, ReadableFontData data, int offset, int length) {
+//    Glyph.GlyphType type = Glyph.glyphType(data, offset, length);
+//    if (type == GlyphType.Simple) {
+//      return (T) new SimpleGlyph(data, offset, length);
+//    }
+//    return (T) new CompositeGlyph(data, offset, length);
+//  }
 
-  static Glyph getGlyph(GlyphTable table, ReadableFontData data, int offset, int length) {
-    Glyph.GlyphType type = glyphType(data, offset, length);
+  static Glyph getGlyph(
+      GlyphTable table, ReadableFontData data, int offset, int length) {
+    Glyph.GlyphType type = Glyph.glyphType(data, offset, length);
     if (type == GlyphType.Simple) {
       return new SimpleGlyph(data, offset, length);
     }
@@ -77,42 +79,44 @@ public abstract class Glyph extends SubTable {
 
   protected abstract void initialize();
 
+
   @Override
   public int padding() {
-    initialize();
+    this.initialize();
     return super.padding();
   }
 
   public Glyph.GlyphType glyphType() {
-    return glyphType;
+    return this.glyphType;
   }
 
   /**
-   * Gets the number of contours in the glyph. If this returns a number greater than or equal to
-   * zero it is the actual number of contours and this is a simple glyph. If there are zero contours
-   * in the glyph then none of the other data operations will return usable values. If it -1 then
-   * the glyph is a composite glyph.
-   *
+   * Gets the number of contours in the glyph. If this returns a number greater
+   * than or equal to zero it is the actual number of contours and this is a
+   * simple glyph. If there are zero contours in the glyph then none of the
+   * other data operations will return usable values. If it -1 then the glyph is
+   * a composite glyph.
+   * 
    * @return number of contours
    */
   public int numberOfContours() {
-    return numberOfContours;
+    return this.numberOfContours;
   }
 
   public int xMin() {
-    return data.readShort(GlyphTable.Offset.xMin);
+    return this.data.readShort(Offset.xMin.offset);
   }
 
   public int xMax() {
-    return data.readShort(GlyphTable.Offset.xMax);
+    return this.data.readShort(Offset.xMax.offset);
   }
 
   public int yMin() {
-    return data.readShort(GlyphTable.Offset.yMin);
+    return this.data.readShort(Offset.yMin.offset);
   }
 
   public int yMax() {
-    return data.readShort(GlyphTable.Offset.yMax);
+    return this.data.readShort(Offset.yMax.offset);
   }
 
   public abstract int instructionSize();
@@ -121,14 +125,31 @@ public abstract class Glyph extends SubTable {
 
   @Override
   public String toString() {
-    return String.format(
-        "%s, contours=%d, [xmin=%d, ymin=%d, xmax=%d, ymax=%d]\n",
-        glyphType(), numberOfContours(), xMin(), yMin(), xMax(), yMax());
+    return this.toString(0);
+  }
+
+  public String toString(int length) {
+    StringBuilder sb = new StringBuilder();
+    sb.append(this.glyphType());
+    sb.append(", contours=");
+    sb.append(this.numberOfContours());
+    sb.append(", [xmin=");
+    sb.append(this.xMin());
+    sb.append(", ymin=");
+    sb.append(this.yMin());
+    sb.append(", xmax=");
+    sb.append(this.xMax());
+    sb.append(", ymax=");
+    sb.append(this.yMax());
+    sb.append("]");
+    sb.append("\n");
+    return sb.toString();
   }
 
   // TODO(stuartg): interface? need methods from Composite?
   public abstract static class Contour {
-    protected Contour() {}
+    protected Contour() {
+    }
   }
 
   public abstract static class Builder<T extends Glyph> extends SubTable.Builder<T> {
@@ -142,18 +163,23 @@ public abstract class Glyph extends SubTable {
       super(data);
     }
 
+    /**
+     * @param data
+     * @param offset
+     * @param length
+     */
     protected Builder(WritableFontData data, int offset, int length) {
       this(data.slice(offset, length));
     }
 
     static Glyph.Builder<? extends Glyph> getBuilder(
         GlyphTable.Builder tableBuilder, ReadableFontData data) {
-      return getBuilder(tableBuilder, data, 0, data.length());
+      return Glyph.Builder.getBuilder(tableBuilder, data, 0, data.length());
     }
 
     static Glyph.Builder<? extends Glyph> getBuilder(
         GlyphTable.Builder tableBuilder, ReadableFontData data, int offset, int length) {
-      Glyph.GlyphType type = glyphType(data, offset, length);
+      Glyph.GlyphType type = Glyph.glyphType(data, offset, length);
       if (type == GlyphType.Simple) {
         return new SimpleGlyph.SimpleGlyphBuilder(data, offset, length);
       }
@@ -167,7 +193,7 @@ public abstract class Glyph extends SubTable {
 
     @Override
     protected int subDataSizeToSerialize() {
-      return internalReadData().length();
+      return this.internalReadData().length();
     }
 
     @Override
@@ -177,7 +203,7 @@ public abstract class Glyph extends SubTable {
 
     @Override
     protected int subSerialize(WritableFontData newData) {
-      return internalReadData().copyTo(newData);
+      return this.internalReadData().copyTo(newData);
     }
   }
 }

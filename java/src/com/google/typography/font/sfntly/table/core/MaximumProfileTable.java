@@ -29,25 +29,34 @@ import com.google.typography.font.sfntly.table.TableBasedTableBuilder;
  */
 public final class MaximumProfileTable extends Table {
 
-  private interface Offset {
+  /**
+   * Offsets to specific elements in the underlying data. These offsets are relative to the
+   * start of the table or the start of sub-blocks within the table.
+   */
+  private enum Offset {
     // version 0.5 and 1.0
-    int version = 0;
-    int numGlyphs = 4;
+    version(0),
+    numGlyphs(4),
 
     // version 1.0
-    int maxPoints = 6;
-    int maxContours = 8;
-    int maxCompositePoints = 10;
-    int maxCompositeContours = 12;
-    int maxZones = 14;
-    int maxTwilightPoints = 16;
-    int maxStorage = 18;
-    int maxFunctionDefs = 20;
-    int maxInstructionDefs = 22;
-    int maxStackElements = 24;
-    int maxSizeOfInstructions = 26;
-    int maxComponentElements = 28;
-    int maxComponentDepth = 30;
+    maxPoints(6),
+    maxContours(8),
+    maxCompositePoints(10),
+    maxCompositeContours(12),
+    maxZones(14),
+    maxTwilightPoints(16),
+    maxStorage(18),
+    maxFunctionDefs(20),
+    maxInstructionDefs(22),
+    maxStackElements(24),
+    maxSizeOfInstructions(26),
+    maxComponentElements(28),
+    maxComponentDepth(30);
+
+    private final int offset;
+    private Offset(int offset) {
+      this.offset = offset;
+    }
   }
 
   private MaximumProfileTable(Header header, ReadableFontData data) {
@@ -55,68 +64,79 @@ public final class MaximumProfileTable extends Table {
   }
 
   public int tableVersion() {
-    return data.readFixed(Offset.version);
+    return this.data.readFixed(Offset.version.offset);
   }
 
   public int numGlyphs() {
-    return data.readUShort(Offset.numGlyphs);
+    return this.data.readUShort(Offset.numGlyphs.offset);
   }
 
   public int maxPoints() {
-    return data.readUShort(Offset.maxPoints);
+    return this.data.readUShort(Offset.maxPoints.offset);
   }
 
   public int maxContours() {
-    return data.readUShort(Offset.maxContours);
+    return this.data.readUShort(Offset.maxContours.offset);
   }
 
   public int maxCompositePoints() {
-    return data.readUShort(Offset.maxCompositePoints);
+    return this.data.readUShort(Offset.maxCompositePoints.offset);
   }
-
+  
   public int maxCompositeContours() {
-    return data.readUShort(Offset.maxCompositeContours);
+    return this.data.readUShort(Offset.maxCompositeContours.offset);
   }
 
   public int maxZones() {
-    return data.readUShort(Offset.maxZones);
+    return this.data.readUShort(Offset.maxZones.offset);
   }
 
   public int maxTwilightPoints() {
-    return data.readUShort(Offset.maxTwilightPoints);
+    return this.data.readUShort(Offset.maxTwilightPoints.offset);
   }
 
   public int maxStorage() {
-    return data.readUShort(Offset.maxStorage);
+    return this.data.readUShort(Offset.maxStorage.offset);
   }
 
   public int maxFunctionDefs() {
-    return data.readUShort(Offset.maxFunctionDefs);
+    return this.data.readUShort(Offset.maxFunctionDefs.offset);
   }
 
   public int maxStackElements() {
-    return data.readUShort(Offset.maxStackElements);
+    return this.data.readUShort(Offset.maxStackElements.offset);
   }
 
   public int maxSizeOfInstructions() {
-    return data.readUShort(Offset.maxSizeOfInstructions);
+    return this.data.readUShort(Offset.maxSizeOfInstructions.offset);
   }
 
   public int maxComponentElements() {
-    return data.readUShort(Offset.maxComponentElements);
+    return this.data.readUShort(Offset.maxComponentElements.offset);
   }
 
   public int maxComponentDepth() {
-    return data.readUShort(Offset.maxComponentDepth);
+    return this.data.readUShort(Offset.maxComponentDepth.offset);
   }
 
-  /** Builder for a Maximum Profile table - 'maxp'. */
-  public static class Builder extends TableBasedTableBuilder<MaximumProfileTable> {
+  /**
+   * Builder for a Maximum Profile table - 'maxp'.
+   *
+   */
+  public static class 
+  Builder extends TableBasedTableBuilder<MaximumProfileTable> {
 
+    /**
+     * Create a new builder using the header information and data provided.
+     *
+     * @param header the header information
+     * @param data the data holding the table
+     * @return a new builder
+     */
     public static Builder createBuilder(Header header, WritableFontData data) {
       return new Builder(header, data);
     }
-
+    
     protected Builder(Header header, WritableFontData data) {
       super(header, data);
     }
@@ -127,119 +147,122 @@ public final class MaximumProfileTable extends Table {
 
     @Override
     protected MaximumProfileTable subBuildTable(ReadableFontData data) {
-      return new MaximumProfileTable(header(), data);
+      return new MaximumProfileTable(this.header(), data);
     }
 
     public int tableVersion() {
-      return internalReadData().readUShort(Offset.version);
+      return this.internalReadData().readUShort(Offset.version.offset);
     }
 
     public void setTableVersion(int version) {
-      internalWriteData().writeUShort(Offset.version, version);
+      this.internalWriteData().writeUShort(Offset.version.offset, version);
     }
 
     public int numGlyphs() {
-      return internalReadData().readUShort(Offset.numGlyphs);
+      return this.internalReadData().readUShort(Offset.numGlyphs.offset);
     }
 
     public void setNumGlyphs(int numGlyphs) {
-      internalWriteData().writeUShort(Offset.numGlyphs, numGlyphs);
+      this.internalWriteData().writeUShort(Offset.numGlyphs.offset, numGlyphs);
     }
 
     public int maxPoints() {
-      return internalReadData().readUShort(Offset.maxPoints);
+      return this.internalReadData().readUShort(Offset.maxPoints.offset);
     }
 
     public void maxPoints(int maxPoints) {
-      internalWriteData().writeUShort(Offset.maxPoints, maxPoints);
+      this.internalWriteData().writeUShort(Offset.maxPoints.offset, maxPoints);
     }
 
     public int maxContours() {
-      return internalReadData().readUShort(Offset.maxContours);
+      return this.internalReadData().readUShort(Offset.maxContours.offset);
     }
 
     public void setMaxContours(int maxContours) {
-      internalWriteData().writeUShort(Offset.maxContours, maxContours);
+      this.internalWriteData().writeUShort(Offset.maxContours.offset, maxContours);
     }
 
     public int maxCompositePoints() {
-      return internalReadData().readUShort(Offset.maxCompositePoints);
+      return this.internalReadData().readUShort(Offset.maxCompositePoints.offset);
     }
 
     public void setMaxCompositePoints(int maxCompositePoints) {
-      internalWriteData().writeUShort(Offset.maxCompositePoints, maxCompositePoints);
+      this.internalWriteData().writeUShort(Offset.maxCompositePoints.offset, maxCompositePoints);
     }
-
+    
     public int maxCompositeContours() {
-      return internalReadData().readUShort(Offset.maxCompositeContours);
+      return this.internalReadData().readUShort(Offset.maxCompositeContours.offset);
     }
 
     public void setMaxCompositeContours(int maxCompositeContours) {
-      internalWriteData().writeUShort(Offset.maxCompositeContours, maxCompositeContours);
+      this.internalWriteData().writeUShort(
+          Offset.maxCompositeContours.offset, maxCompositeContours);
     }
 
     public int maxZones() {
-      return internalReadData().readUShort(Offset.maxZones);
+      return this.internalReadData().readUShort(Offset.maxZones.offset);
     }
 
     public void setMaxZones(int maxZones) {
-      internalWriteData().writeUShort(Offset.maxZones, maxZones);
+      this.internalWriteData().writeUShort(Offset.maxZones.offset, maxZones);
     }
 
     public int maxTwilightPoints() {
-      return internalReadData().readUShort(Offset.maxTwilightPoints);
+      return this.internalReadData().readUShort(Offset.maxTwilightPoints.offset);
     }
 
     public void setMaxTwilightPoints(int maxTwilightPoints) {
-      internalWriteData().writeUShort(Offset.maxTwilightPoints, maxTwilightPoints);
+      this.internalWriteData().writeUShort(Offset.maxTwilightPoints.offset, maxTwilightPoints);
     }
 
     public int maxStorage() {
-      return internalReadData().readUShort(Offset.maxStorage);
+      return this.internalReadData().readUShort(Offset.maxStorage.offset);
     }
 
     public void setMaxStorage(int maxStorage) {
-      internalWriteData().writeUShort(Offset.maxStorage, maxStorage);
+      this.internalWriteData().writeUShort(Offset.maxStorage.offset, maxStorage);
     }
 
     public int maxFunctionDefs() {
-      return internalReadData().readUShort(Offset.maxFunctionDefs);
+      return this.internalReadData().readUShort(Offset.maxFunctionDefs.offset);
     }
 
     public void setMaxFunctionDefs(int maxFunctionDefs) {
-      internalWriteData().writeUShort(Offset.maxFunctionDefs, maxFunctionDefs);
+      this.internalWriteData().writeUShort(Offset.maxFunctionDefs.offset, maxFunctionDefs);
     }
 
     public int maxStackElements() {
-      return internalReadData().readUShort(Offset.maxStackElements);
+      return this.internalReadData().readUShort(Offset.maxStackElements.offset);
     }
 
     public void setMaxStackElements(int maxStackElements) {
-      internalWriteData().writeUShort(Offset.maxStackElements, maxStackElements);
+      this.internalWriteData().writeUShort(Offset.maxStackElements.offset, maxStackElements);
     }
 
     public int maxSizeOfInstructions() {
-      return internalReadData().readUShort(Offset.maxSizeOfInstructions);
+      return this.internalReadData().readUShort(Offset.maxSizeOfInstructions.offset);
     }
 
     public void setMaxSizeOfInstructions(int maxSizeOfInstructions) {
-      internalWriteData().writeUShort(Offset.maxSizeOfInstructions, maxSizeOfInstructions);
+      this.internalWriteData().writeUShort(
+          Offset.maxSizeOfInstructions.offset, maxSizeOfInstructions);
     }
 
     public int maxComponentElements() {
-      return internalReadData().readUShort(Offset.maxComponentElements);
+      return this.internalReadData().readUShort(Offset.maxComponentElements.offset);
     }
 
     public void setMaxComponentElements(int maxComponentElements) {
-      internalWriteData().writeUShort(Offset.maxComponentElements, maxComponentElements);
+      this.internalWriteData().writeUShort(
+          Offset.maxComponentElements.offset, maxComponentElements);
     }
 
     public int maxComponentDepth() {
-      return internalReadData().readUShort(Offset.maxComponentDepth);
+      return this.internalReadData().readUShort(Offset.maxComponentDepth.offset);
     }
 
     public void setMaxComponentDepth(int maxComponentDepth) {
-      internalWriteData().writeUShort(Offset.maxComponentDepth, maxComponentDepth);
+      this.internalWriteData().writeUShort(Offset.maxComponentDepth.offset, maxComponentDepth);
     }
   }
 }

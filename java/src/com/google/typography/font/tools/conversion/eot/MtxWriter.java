@@ -22,18 +22,21 @@ import com.google.typography.font.sfntly.table.Table;
 import com.google.typography.font.sfntly.table.core.FontHeaderTable;
 import com.google.typography.font.sfntly.table.core.HorizontalDeviceMetricsTable;
 import com.google.typography.font.sfntly.table.truetype.ControlValueTable;
+
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-/** @author Raph Levien */
+/**
+ * @author Raph Levien
+ */
 public class MtxWriter {
-
+  
   private static final Set<Integer> REMOVE_TABLES = createRemoveTables();
-
+  
   private static Set<Integer> createRemoveTables() {
-    Set<Integer> result = new HashSet<>();
+    Set<Integer> result = new HashSet<Integer>();
     result.add(Tag.VDMX);
     result.add(Tag.glyf);
     result.add(Tag.cvt);
@@ -70,7 +73,7 @@ public class MtxWriter {
     if (hdmxTable != null) {
       fontBuilder.addTable(Tag.hdmx, new HdmxEncoder().encode(sfntlyFont));
     }
-
+    
     byte[] block1 = fontBuilder.build();
     byte[] block2 = glyfEncoder.getPushBytes();
     byte[] block3 = glyfEncoder.getCodeBytes();
@@ -83,11 +86,12 @@ public class MtxWriter {
     data[off + 2] = (byte) (value & 0xff);
   }
 
-  /** Compress the blocks and pack them into the final container, as per section 2 of the spec. */
+  /**
+   * Compress the blocks and pack them into the final container, as per section 2 of the spec.
+   */
   private static byte[] packMtx(byte[] block1, byte[] block2, byte[] block3) {
-    int copyDist =
-        Math.max(block1.length, Math.max(block2.length, block3.length))
-            + LzcompCompress.getPreloadSize();
+    int copyDist = Math.max(block1.length, Math.max(block2.length, block3.length)) +
+        LzcompCompress.getPreloadSize();
     byte[] compressed1 = LzcompCompress.compress(block1);
     byte[] compressed2 = LzcompCompress.compress(block2);
     byte[] compressed3 = LzcompCompress.compress(block3);

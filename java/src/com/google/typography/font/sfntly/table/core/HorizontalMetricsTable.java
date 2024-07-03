@@ -16,7 +16,6 @@
 
 package com.google.typography.font.sfntly.table.core;
 
-import com.google.typography.font.sfntly.data.FontData;
 import com.google.typography.font.sfntly.data.ReadableFontData;
 import com.google.typography.font.sfntly.data.WritableFontData;
 import com.google.typography.font.sfntly.table.Header;
@@ -27,17 +26,31 @@ import com.google.typography.font.sfntly.table.TableBasedTableBuilder;
  * A Horizontal Metrics table - 'hmtx'.
  *
  * @author Stuart Gill
- * @see "ISO/IEC 14496-22:2015, section 5.2.4"
  */
 public final class HorizontalMetricsTable extends Table {
 
   private int numHMetrics;
   private int numGlyphs;
 
-  private interface MetricOffset {
-    int advanceWidth = 0;
-    int leftSideBearing = 2;
-    int SIZE = 4;
+  /**
+   * Offsets to specific elements in the underlying data. These offsets are relative to the
+   * start of the table or the start of sub-blocks within the table.
+   */
+  private enum Offset {
+    // hMetrics
+    hMetricsStart(0), hMetricsSize(4),
+
+    // Offsets within an hMetric
+    hMetricsAdvanceWidth(0),
+    hMetricsLeftSideBearing(2),
+
+    LeftSideBearingSize(2);
+
+    private final int offset;
+
+    private Offset(int offset) {
+      this.offset = offset;
+    }
   }
 
   private HorizontalMetricsTable(
@@ -48,57 +61,78 @@ public final class HorizontalMetricsTable extends Table {
   }
 
   public int numberOfHMetrics() {
-    return numHMetrics;
+    return this.numHMetrics;
   }
 
   public int numberOfLSBs() {
-    return numGlyphs - numHMetrics;
+    return this.numGlyphs - this.numHMetrics;
   }
 
   public int hMetricAdvanceWidth(int entry) {
-    if (entry > numHMetrics) {
+    if (entry > this.numHMetrics) {
       throw new IndexOutOfBoundsException();
     }
-    return data.readUShort(entry * MetricOffset.SIZE + MetricOffset.advanceWidth);
+    int offset = 
+      Offset.hMetricsStart.offset + 
+      (entry * Offset.hMetricsSize.offset) + Offset.hMetricsAdvanceWidth.offset;
+    return this.data.readUShort(offset);
   }
 
   public int hMetricLSB(int entry) {
-    if (entry > numHMetrics) {
+    if (entry > this.numHMetrics) {
       throw new IndexOutOfBoundsException();
     }
-    return data.readShort(entry * MetricOffset.SIZE + MetricOffset.leftSideBearing);
+    int offset = 
+      Offset.hMetricsStart.offset + 
+      (entry * Offset.hMetricsSize.offset) + Offset.hMetricsLeftSideBearing.offset;
+    return this.data.readShort(offset);
   }
 
   public int lsbTableEntry(int entry) {
-    if (entry > numberOfLSBs()) {
+    if (entry > this.numberOfLSBs()) {
       throw new IndexOutOfBoundsException();
     }
-    return data.readShort(numHMetrics * MetricOffset.SIZE + entry * FontData.SizeOf.SHORT);
+    int offset = 
+      Offset.hMetricsStart.offset + 
+      (this.numHMetrics * Offset.hMetricsSize.offset) + (entry * Offset.LeftSideBearingSize.offset);
+    return this.data.readShort(offset);
+
   }
 
   public int advanceWidth(int glyphId) {
-    if (glyphId < numHMetrics) {
-      return hMetricAdvanceWidth(glyphId);
+    if (glyphId < this.numHMetrics) {
+      return this.hMetricAdvanceWidth(glyphId);
     }
-    return hMetricAdvanceWidth(numHMetrics - 1);
+    return this.hMetricAdvanceWidth(this.numHMetrics - 1);
   }
 
   public int leftSideBearing(int glyphId) {
-    if (glyphId < numHMetrics) {
-      return hMetricLSB(glyphId);
+    if (glyphId < this.numHMetrics) {
+      return this.hMetricLSB(glyphId);
     }
-    return lsbTableEntry(glyphId - numHMetrics);
+    return this.lsbTableEntry(glyphId - this.numHMetrics);
   }
 
-  /** Builder for a Horizontal Metrics Table - 'hmtx'. */
-  public static class Builder extends TableBasedTableBuilder<HorizontalMetricsTable> {
+  /**
+   * Builder for a Horizontal Metrics Table - 'hmtx'.
+   *
+   */
+  public static class 
+  Builder extends TableBasedTableBuilder<HorizontalMetricsTable> {
     private int numHMetrics = -1;
     private int numGlyphs = -1;
 
+    /**
+     * Create a new builder using the header information and data provided.
+     *
+     * @param header the header information
+     * @param data the data holding the table
+     * @return a new builder
+     */
     public static Builder createBuilder(Header header, WritableFontData data) {
       return new Builder(header, data);
     }
-
+    
     protected Builder(Header header, WritableFontData data) {
       super(header, data);
     }
@@ -109,7 +143,7 @@ public final class HorizontalMetricsTable extends Table {
 
     @Override
     protected HorizontalMetricsTable subBuildTable(ReadableFontData data) {
-      return new HorizontalMetricsTable(header(), data, numHMetrics, numGlyphs);
+      return new HorizontalMetricsTable(this.header(), data, this.numHMetrics, this.numGlyphs);
     }
 
     public void setNumberOfHMetrics(int numHMetrics) {
@@ -117,15 +151,15 @@ public final class HorizontalMetricsTable extends Table {
         throw new IllegalArgumentException("Number of metrics can't be negative.");
       }
       this.numHMetrics = numHMetrics;
-      table().numHMetrics = numHMetrics;
+      this.table().numHMetrics = numHMetrics;
     }
 
     public void setNumGlyphs(int numGlyphs) {
       if (numGlyphs < 0) {
-        throw new IllegalArgumentException("Number of glyphs can't be negative.");
+        throw new IllegalArgumentException("Number of glyphs can't be negative.");        
       }
       this.numGlyphs = numGlyphs;
-      table().numGlyphs = numGlyphs;
+      this.table().numGlyphs = numGlyphs;
     }
   }
 }

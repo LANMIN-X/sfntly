@@ -21,11 +21,12 @@ public class ChainSubGenericRule extends SubTable {
     backtrackGlyphs = new NumRecordList(data);
     inputClasses = new NumRecordList(data, 1, backtrackGlyphs.limit());
     lookAheadGlyphs = new NumRecordList(data, 0, inputClasses.limit());
-    lookupRecords =
-        new SubstLookupRecordList(data, lookAheadGlyphs.limit(), lookAheadGlyphs.limit() + 2);
+    lookupRecords = new SubstLookupRecordList(
+        data, lookAheadGlyphs.limit(), lookAheadGlyphs.limit() + 2);
   }
 
-  abstract static class Builder<T extends ChainSubGenericRule> extends VisibleSubTable.Builder<T> {
+  abstract static class Builder<T extends ChainSubGenericRule> extends
+      VisibleSubTable.Builder<T> {
     private NumRecordList backtrackGlyphsBuilder;
     private NumRecordList inputGlyphsBuilder;
     private NumRecordList lookAheadGlyphsBuilder;
@@ -62,17 +63,13 @@ public class ChainSubGenericRule extends SubTable {
         return 0;
       }
 
-      if (backtrackGlyphsBuilder == null
-          || inputGlyphsBuilder == null
-          || lookAheadGlyphsBuilder == null
-          || lookupRecordsBuilder == null) {
+      if (backtrackGlyphsBuilder == null || inputGlyphsBuilder == null
+          || lookAheadGlyphsBuilder == null || lookupRecordsBuilder == null) {
         return serializeFromData(newData);
       }
 
-      return backtrackGlyphsBuilder.writeTo(newData)
-          + inputGlyphsBuilder.writeTo(newData)
-          + lookAheadGlyphsBuilder.writeTo(newData)
-          + lookupRecordsBuilder.writeTo(newData);
+      return backtrackGlyphsBuilder.writeTo(newData) + inputGlyphsBuilder.writeTo(newData)
+          + lookAheadGlyphsBuilder.writeTo(newData) + lookupRecordsBuilder.writeTo(newData);
     }
 
     @Override
@@ -97,10 +94,8 @@ public class ChainSubGenericRule extends SubTable {
     }
 
     private void initFromData(ReadableFontData data) {
-      if (backtrackGlyphsBuilder == null
-          || inputGlyphsBuilder == null
-          || lookAheadGlyphsBuilder == null
-          || lookupRecordsBuilder == null) {
+      if (backtrackGlyphsBuilder == null || inputGlyphsBuilder == null
+          || lookAheadGlyphsBuilder == null || lookupRecordsBuilder == null) {
         backtrackGlyphsBuilder = new NumRecordList(data);
         inputGlyphsBuilder = new NumRecordList(data, 0, backtrackGlyphsBuilder.limit());
         lookAheadGlyphsBuilder = new NumRecordList(data, 0, inputGlyphsBuilder.limit());

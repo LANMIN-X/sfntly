@@ -43,7 +43,8 @@ public class FeatureListTable extends TagOffsetsTable<FeatureTable> {
     }
 
     @Override
-    protected void initFields() {}
+    protected void initFields() {
+    }
 
     @Override
     public int fieldCount() {

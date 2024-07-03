@@ -14,7 +14,8 @@ public abstract class ChainSubGenericRuleSet<T extends ChainSubGenericRule>
     return 0;
   }
 
-  abstract static class Builder<T extends ChainSubGenericRuleSet<S>, S extends ChainSubGenericRule>
+  static abstract class Builder<
+      T extends ChainSubGenericRuleSet<S>, S extends ChainSubGenericRule>
       extends OffsetRecordTable.Builder<T, S> {
 
     protected Builder(ReadableFontData data, boolean dataIsCanonical) {
@@ -30,7 +31,8 @@ public abstract class ChainSubGenericRuleSet<T extends ChainSubGenericRule>
     }
 
     @Override
-    protected void initFields() {}
+    protected void initFields() {
+    }
 
     @Override
     public int fieldCount() {

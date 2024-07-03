@@ -19,11 +19,10 @@ enum LookupFlag {
   }
 
   private final int mask;
-
   private LookupFlag(int mask) {
     this.mask = mask;
   }
-
+  
   static boolean isFlagSet(int flags, int mask) {
     return (flags & mask) != 0;
   }
@@ -36,3 +35,4 @@ enum LookupFlag {
     return flags & ~mask;
   }
 }
+

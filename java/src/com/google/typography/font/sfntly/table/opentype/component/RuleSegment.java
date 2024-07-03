@@ -1,10 +1,11 @@
 package com.google.typography.font.sfntly.table.opentype.component;
 
 import com.google.typography.font.sfntly.table.core.PostScriptTable;
-import java.util.ArrayList;
-import java.util.Collection;
 
-class RuleSegment extends ArrayList<GlyphGroup> {
+import java.util.Collection;
+import java.util.LinkedList;
+
+class RuleSegment extends LinkedList<GlyphGroup> {
   private static final long serialVersionUID = 4563803321401665616L;
 
   RuleSegment() {
@@ -34,7 +35,7 @@ class RuleSegment extends ArrayList<GlyphGroup> {
 
   @Override
   public boolean addAll(Collection<? extends GlyphGroup> glyphGroups) {
-    for (GlyphGroup glyphGroup : glyphGroups) {
+    for(GlyphGroup glyphGroup : glyphGroups) {
       if (glyphGroup == null) {
         throw new IllegalArgumentException("Null GlyphGroup not allowed");
       }
@@ -66,4 +67,5 @@ class RuleSegment extends ArrayList<GlyphGroup> {
     }
     return sb.toString();
   }
+
 }

@@ -2,6 +2,7 @@ package com.google.typography.font.sfntly.table.opentype.testing;
 
 import com.google.typography.font.sfntly.Font;
 import com.google.typography.font.sfntly.FontFactory;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -11,7 +12,7 @@ import java.util.List;
 
 public class FontLoader {
   public static List<File> getFontFiles(String fontDir) {
-    List<File> fontFiles = new ArrayList<>();
+    List<File> fontFiles = new ArrayList<File>();
     getFontFiles(fontFiles, new File(fontDir), "", true);
     return fontFiles;
   }
@@ -43,11 +44,14 @@ public class FontLoader {
   private static Font[] load(File file) throws IOException {
     FontFactory fontFactory = FontFactory.getInstance();
     fontFactory.fingerprintFont(true);
-    try (FileInputStream is = new FileInputStream(file)) {
+    FileInputStream is = new FileInputStream(file);
+    try {
       return fontFactory.loadFonts(is);
     } catch (FileNotFoundException e) {
       System.err.println("Could not load the font : " + file.getName());
       return null;
+    } finally {
+      is.close();
     }
   }
 }

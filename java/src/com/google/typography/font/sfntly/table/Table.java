@@ -31,18 +31,17 @@ import com.google.typography.font.sfntly.table.core.MaximumProfileTable;
 import com.google.typography.font.sfntly.table.core.NameTable;
 import com.google.typography.font.sfntly.table.core.OS2Table;
 import com.google.typography.font.sfntly.table.core.PostScriptTable;
-import com.google.typography.font.sfntly.table.extra.VerticalHeaderTable;
-import com.google.typography.font.sfntly.table.extra.VerticalMetricsTable;
 import com.google.typography.font.sfntly.table.opentype.GSubTable;
 import com.google.typography.font.sfntly.table.truetype.ControlProgramTable;
 import com.google.typography.font.sfntly.table.truetype.ControlValueTable;
 import com.google.typography.font.sfntly.table.truetype.GlyphTable;
 import com.google.typography.font.sfntly.table.truetype.LocaTable;
 
+
 /**
- * A concrete implementation of a root level table in the font. This is the base class used for all
- * specific table implementations and is used as the generic table for all tables which have no
- * specific implementations.
+ * A concrete implementation of a root level table in the font. This is the base
+ * class used for all specific table implementations and is used as the generic
+ * table for all tables which have no specific implementations.
  *
  * @author Stuart Gill
  */
@@ -55,9 +54,13 @@ public class Table extends FontDataTable {
     this.header = header;
   }
 
-  /** Get the calculated checksum for the data in the table. */
+  /**
+   * Get the calculated checksum for the data in the table.
+   *
+   * @return the checksum
+   */
   public long calculatedChecksum() {
-    return data.checksum();
+    return this.data.checksum();
   }
 
   /**
@@ -66,7 +69,7 @@ public class Table extends FontDataTable {
    * @return the table header
    */
   public Header header() {
-    return header;
+    return this.header;
   }
 
   /**
@@ -76,7 +79,7 @@ public class Table extends FontDataTable {
    * @see #header
    */
   public int headerTag() {
-    return header().tag();
+    return this.header().tag();
   }
 
   /**
@@ -86,7 +89,7 @@ public class Table extends FontDataTable {
    * @see #header
    */
   public int headerOffset() {
-    return header().offset();
+    return this.header().offset();
   }
 
   /**
@@ -96,7 +99,7 @@ public class Table extends FontDataTable {
    * @see #header
    */
   public int headerLength() {
-    return header().length();
+    return this.header().length();
   }
 
   /**
@@ -106,18 +109,26 @@ public class Table extends FontDataTable {
    * @see #header
    */
   public long headerChecksum() {
-    return header().checksum();
+    return this.header().checksum();
   }
 
   @Override
   public String toString() {
-    return String.format(
-        "[%-4s, cs=0x%08x, offset=0x%08x, size=0x%08x]",
-        Tag.stringValue(header.tag()), header.checksum(), header.offset(), header.length());
+    StringBuilder sb = new StringBuilder();
+    sb.append("[");
+    sb.append(Tag.stringValue(this.header.tag()));
+    sb.append(", cs=0x");
+    sb.append(Long.toHexString(this.header.checksum()));
+    sb.append(", offset=0x");
+    sb.append(Integer.toHexString(this.header.offset()));
+    sb.append(", size=0x");
+    sb.append(Integer.toHexString(this.header.length()));
+    sb.append("]");
+    return sb.toString();
   }
 
   public abstract static class Builder<T extends Table> extends FontDataTable.Builder<T> {
-    private final Header header;
+    private Header header;
 
     protected Builder(Header header, WritableFontData data) {
       super(data);
@@ -135,29 +146,27 @@ public class Table extends FontDataTable {
 
     @Override
     public String toString() {
-      return "Table Builder for - " + header.toString();
+      return "Table Builder for - " + this.header.toString();
     }
 
-    /**
-     * *********************************************************************************
-     *
-     * <p>Public Interface for Table Building
-     *
-     * <p>*********************************************************************************
-     */
+    /***********************************************************************************
+     * 
+     * Public Interface for Table Building
+     * 
+     ***********************************************************************************/
+
     public final Header header() {
-      return header;
+      return this.header;
     }
 
-    /**
-     * ********************************************************************************* Internal
-     * Interface for Table Building
-     * *********************************************************************************
-     */
+    /***********************************************************************************
+     * Internal Interface for Table Building
+     ***********************************************************************************/
+
     @Override
     protected void notifyPostTableBuild(T table) {
-      if (modelChanged() || dataChanged()) {
-        Header header = new Header(header().tag(), table.dataLength());
+      if (this.modelChanged() || this.dataChanged()) {
+        Header header = new Header(this.header().tag(), table.dataLength());
         ((Table) table).header = header;
       }
     }
@@ -167,7 +176,9 @@ public class Table extends FontDataTable {
     /**
      * Get a builder for the table type specified by the data in the header.
      *
+     * @param header the header for the table
      * @param tableData the data to be used to build the table from
+     * @return builder for the table specified
      */
     public static Table.Builder<? extends Table> getBuilder(
         Header header, WritableFontData tableData) {
@@ -236,10 +247,10 @@ public class Table extends FontDataTable {
         // break;
         // } else if (tag == VDMX) {
         // break;
-         } else if (tag == Tag.vhea) {
-             return VerticalHeaderTable.Builder.createBuilder(header, tableData);
-         } else if (tag == Tag.vmtx) {
-             return VerticalMetricsTable.Builder.createBuilder(header, tableData);
+        // } else if (tag == vhea) {
+        // break;
+        // } else if (tag == vmtx) {
+        // break;
       } else if (tag == Tag.bhed) {
         return FontHeaderTable.Builder.createBuilder(header, tableData);
       } else if (tag == Tag.bdat) {

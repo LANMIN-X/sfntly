@@ -16,101 +16,124 @@
 
 package com.google.typography.font.sfntly.table.bitmap;
 
+import com.google.typography.font.sfntly.data.FontData;
 import com.google.typography.font.sfntly.data.ReadableFontData;
 import com.google.typography.font.sfntly.data.WritableFontData;
 import com.google.typography.font.sfntly.table.Header;
 import com.google.typography.font.sfntly.table.SubTable;
 import com.google.typography.font.sfntly.table.Table;
 
-/** @author Stuart Gill */
+/**
+ * @author Stuart Gill
+ *
+ */
 public class EbscTable extends Table {
 
-  private interface HeaderOffset {
-    int version = 0;
-    int numSizes = 4;
-    int SIZE = 8;
+  enum Offset {
+    // header
+    version(0),
+    numSizes(FontData.DataSize.Fixed.size()),
+    headerLength(numSizes.offset + FontData.DataSize.ULONG.size()),
+    bitmapScaleTableStart(headerLength.offset),
+
+    // bitmapScaleTable
+    bitmapScaleTable_hori(0),
+    bitmapScaleTable_vert(EblcTable.Offset.sbitLineMetricsLength.offset),
+    bitmapScaleTable_ppemX(bitmapScaleTable_vert.offset
+        + EblcTable.Offset.sbitLineMetricsLength.offset),
+    bitmapScaleTable_ppemY(bitmapScaleTable_ppemX.offset + FontData.DataSize.BYTE.size()),
+    bitmapScaleTable_substitutePpemX(bitmapScaleTable_ppemY.offset + FontData.DataSize.BYTE.size()),
+    bitmapScaleTable_substitutePpemY(bitmapScaleTable_substitutePpemX.offset
+        + FontData.DataSize.BYTE.size()),
+    bitmapScaleTableLength(bitmapScaleTable_substitutePpemY.offset + FontData.DataSize.BYTE.size());
+
+    final int offset;
+
+    private Offset(int offset) {
+      this.offset = offset;
+    }
   }
 
-  private interface BitmapScale {
-    int hori = 0;
-    int vert = 12;
-    int ppemX = 24;
-    int ppemY = 25;
-    int substitutePpemX = 26;
-    int substitutePpemY = 27;
-    int SIZE = 28;
-  }
-
+  /**
+   * @param header
+   * @param data
+   */
   private EbscTable(Header header, ReadableFontData data) {
     super(header, data);
   }
 
   public int version() {
-    return data.readFixed(HeaderOffset.version);
+    return this.data.readFixed(Offset.version.offset);
   }
 
   public int numSizes() {
-    return data.readULongAsInt(HeaderOffset.numSizes);
+    return this.data.readULongAsInt(Offset.numSizes.offset);
   }
 
   public BitmapScaleTable bitmapScaleTable(int index) {
-    if (index < 0 || index > numSizes() - 1) {
+    if (index < 0 || index > this.numSizes() - 1) {
       throw new IndexOutOfBoundsException(
           "BitmapScaleTable index is outside the bounds of available tables.");
     }
-    return new BitmapScaleTable(data, HeaderOffset.SIZE + index * BitmapScale.SIZE);
+    return new BitmapScaleTable(this.data,
+        Offset.bitmapScaleTableStart.offset + index * Offset.bitmapScaleTableLength.offset);
   }
 
   public static class BitmapScaleTable extends SubTable {
     protected BitmapScaleTable(ReadableFontData data, int offset) {
-      super(data, offset, BitmapScale.SIZE);
-    }
-
-    public SbitLineMetrics hori() {
-      ReadableFontData horiData = data.slice(BitmapScale.hori, SbitLineMetrics.SIZE);
-      return new SbitLineMetrics(horiData, data);
-    }
-
-    public SbitLineMetrics vert() {
-      ReadableFontData horiData = data.slice(BitmapScale.vert, SbitLineMetrics.SIZE);
-      return new SbitLineMetrics(horiData, data);
+      super(data, offset, Offset.bitmapScaleTableLength.offset);
     }
 
     public int ppemX() {
-      return data.readByte(BitmapScale.ppemX);
+      return this.data.readByte(Offset.bitmapScaleTable_ppemX.offset);
     }
 
     public int ppemY() {
-      return data.readByte(BitmapScale.ppemY);
+      return this.data.readByte(Offset.bitmapScaleTable_ppemY.offset);
     }
 
     public int substitutePpemX() {
-      return data.readByte(BitmapScale.substitutePpemX);
+      return this.data.readByte(Offset.bitmapScaleTable_substitutePpemX.offset);
     }
 
     public int substitutePpemY() {
-      return data.readByte(BitmapScale.substitutePpemY);
+      return this.data.readByte(Offset.bitmapScaleTable_substitutePpemY.offset);
     }
   }
 
   // TODO(stuartg): currently the builder just builds from initial data
   // - need to make fully working but few if any examples to test with
   public static class Builder extends Table.Builder<EbscTable> {
+    /**
+     * Create a new builder using the header information and data provided.
+     *
+     * @param header the header information
+     * @param data the data holding the table
+     * @return a new builder
+     */
     public static Builder createBuilder(Header header, WritableFontData data) {
       return new Builder(header, data);
     }
 
+    /**
+     * @param header
+     * @param data
+     */
     protected Builder(Header header, WritableFontData data) {
       super(header, data);
     }
 
+    /**
+     * @param header
+     * @param data
+     */
     protected Builder(Header header, ReadableFontData data) {
       super(header, data);
     }
 
     @Override
     protected EbscTable subBuildTable(ReadableFontData data) {
-      return new EbscTable(header(), data);
+      return new EbscTable(this.header(), data);
     }
 
     @Override
@@ -132,5 +155,6 @@ public class EbscTable extends Table {
     protected int subSerialize(WritableFontData newData) {
       return 0;
     }
+
   }
 }

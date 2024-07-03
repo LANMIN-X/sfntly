@@ -17,16 +17,18 @@
 package com.google.typography.font.sfntly.table.bitmap;
 
 import com.google.typography.font.sfntly.data.ReadableFontData;
-import com.google.typography.font.sfntly.data.SfObjects;
 import com.google.typography.font.sfntly.data.WritableFontData;
 
-/** @author Stuart Gill */
+/**
+ * @author Stuart Gill
+ *
+ */
 public class CompositeBitmapGlyph extends BitmapGlyph {
 
   public static final class Component {
     private final int glyphCode;
-    private final int xOffset;
-    private final int yOffset;
+    private int xOffset;
+    private int yOffset;
 
     protected Component(int glyphCode, int xOffset, int yOffset) {
       this.glyphCode = glyphCode;
@@ -35,20 +37,23 @@ public class CompositeBitmapGlyph extends BitmapGlyph {
     }
 
     public int glyphCode() {
-      return glyphCode;
+      return this.glyphCode;
     }
 
     public int xOffset() {
-      return xOffset;
+      return this.xOffset;
     }
 
     public int yOffset() {
-      return yOffset;
+      return this.yOffset;
     }
 
     @Override
     public int hashCode() {
-      return SfObjects.hash(glyphCode);
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + glyphCode;
+      return result;
     }
 
     @Override
@@ -63,13 +68,16 @@ public class CompositeBitmapGlyph extends BitmapGlyph {
         return false;
       }
       Component other = (Component) obj;
-      return glyphCode == other.glyphCode;
+      if (glyphCode != other.glyphCode) {
+        return false;
+      }
+      return true;
     }
   }
-
+  
   private int numComponentsOffset;
   private int componentArrayOffset;
-
+  
   protected CompositeBitmapGlyph(ReadableFontData data, int format) {
     super(data, format);
     initialize(format);
@@ -82,11 +90,11 @@ public class CompositeBitmapGlyph extends BitmapGlyph {
    */
   private void initialize(int format) {
     if (format == 8) {
-      this.numComponentsOffset = Offset.glyphFormat8_numComponents;
-      this.componentArrayOffset = Offset.glyphFormat8_componentArray;
+      this.numComponentsOffset = Offset.glyphFormat8_numComponents.offset;
+      this.componentArrayOffset = Offset.glyphFormat8_componentArray.offset;
     } else if (format == 9) {
-      this.numComponentsOffset = Offset.glyphFormat9_numComponents;
-      this.componentArrayOffset = Offset.glyphFormat9_componentArray;
+      this.numComponentsOffset = Offset.glyphFormat9_numComponents.offset;
+      this.componentArrayOffset = Offset.glyphFormat9_componentArray.offset;
     } else {
       throw new IllegalStateException(
           "Attempt to create a Composite Bitmap Glyph with a non-composite format.");
@@ -94,17 +102,18 @@ public class CompositeBitmapGlyph extends BitmapGlyph {
   }
 
   public int numComponents() {
-    return data.readUShort(numComponentsOffset);
+    return this.data.readUShort(this.numComponentsOffset);
   }
 
   public Component component(int componentNum) {
-    int componentOffset = componentArrayOffset + componentNum * Offset.ebdtComponentLength;
+    int componentOffset =
+        this.componentArrayOffset + componentNum * Offset.ebdtComponentLength.offset;
     return new Component(
-        data.readUShort(componentOffset + Offset.ebdtComponent_glyphCode),
-        data.readChar(componentOffset + Offset.ebdtComponent_xOffset),
-        data.readChar(componentOffset + Offset.ebdtComponent_yOffset));
+        this.data.readUShort(componentOffset + Offset.ebdtComponent_glyphCode.offset),
+        this.data.readChar(componentOffset + Offset.ebdtComponent_xOffset.offset),
+        this.data.readChar(componentOffset + Offset.ebdtComponent_yOffset.offset));
   }
-
+  
   public static class Builder extends BitmapGlyph.Builder<CompositeBitmapGlyph> {
 
     protected Builder(WritableFontData data, int format) {
@@ -117,7 +126,7 @@ public class CompositeBitmapGlyph extends BitmapGlyph {
 
     @Override
     protected CompositeBitmapGlyph subBuildTable(ReadableFontData data) {
-      return new CompositeBitmapGlyph(data, format());
+      return new CompositeBitmapGlyph(data, this.format());
     }
   }
 }

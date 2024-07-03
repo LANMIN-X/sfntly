@@ -21,52 +21,63 @@ import com.google.typography.font.sfntly.data.ReadableFontData;
 import com.google.typography.font.sfntly.data.WritableFontData;
 import com.google.typography.font.sfntly.table.SubTable;
 
-/** @author Stuart Gill */
+/**
+ * @author Stuart Gill
+ *
+ */
 public abstract class BitmapGlyph extends SubTable {
 
-  protected interface Offset {
+  protected enum Offset {
     // header
-    int version = 0;
+    version(0),
 
-    int smallGlyphMetricsLength = 5;
-    int bigGlyphMetricsLength = 8;
-
+    smallGlyphMetricsLength(5),
+    bigGlyphMetricsLength(8),
     // format 1
-    int glyphFormat1_imageData = smallGlyphMetricsLength;
+    glyphFormat1_imageData(smallGlyphMetricsLength.offset),
 
     // format 2
-    int glyphFormat2_imageData = smallGlyphMetricsLength;
+    glyphFormat2_imageData(smallGlyphMetricsLength.offset),
 
     // format 3
 
     // format 4
 
     // format 5
-    int glyphFormat5_imageData = 0;
+    glyphFormat5_imageData(0),
 
     // format 6
-    int glyphFormat6_imageData = bigGlyphMetricsLength;
+    glyphFormat6_imageData(bigGlyphMetricsLength.offset),
 
     // format 7
-    int glyphFormat7_imageData = bigGlyphMetricsLength;
+    glyphFormat7_imageData(bigGlyphMetricsLength.offset),
 
     // format 8
-    int glyphFormat8_numComponents = smallGlyphMetricsLength + 1;
-    int glyphFormat8_componentArray = glyphFormat8_numComponents + FontData.SizeOf.USHORT;
+    glyphFormat8_numComponents(Offset.smallGlyphMetricsLength.offset + 1),
+    glyphFormat8_componentArray(glyphFormat8_numComponents.offset
+        + FontData.DataSize.USHORT.size()),
 
     // format 9
-    int glyphFormat9_numComponents = bigGlyphMetricsLength;
-    int glyphFormat9_componentArray = glyphFormat9_numComponents + FontData.SizeOf.USHORT;
+    glyphFormat9_numComponents(Offset.bigGlyphMetricsLength.offset),
+    glyphFormat9_componentArray(glyphFormat9_numComponents.offset
+        + FontData.DataSize.USHORT.size()),
+
 
     // ebdtComponent
-    int ebdtComponentLength = FontData.SizeOf.USHORT + 2 * FontData.SizeOf.CHAR;
-    int ebdtComponent_glyphCode = 0;
-    int ebdtComponent_xOffset = 2;
-    int ebdtComponent_yOffset = 3;
+    ebdtComponentLength(FontData.DataSize.USHORT.size() + 2 * FontData.DataSize.CHAR.size()),
+    ebdtComponent_glyphCode(0),
+    ebdtComponent_xOffset(2),
+    ebdtComponent_yOffset(3);
+    
+    protected final int offset;
+
+    private Offset(int offset) {
+      this.offset = offset;
+    }
   }
 
-  private final int format;
-
+  private int format;
+  
   public static BitmapGlyph createGlyph(ReadableFontData data, int format) {
     BitmapGlyph glyph = null;
     BitmapGlyph.Builder<? extends BitmapGlyph> builder = Builder.createGlyphBuilder(data, format);
@@ -87,13 +98,13 @@ public abstract class BitmapGlyph extends SubTable {
   }
 
   public int format() {
-    return format;
+    return this.format;
   }
-
-  public abstract static class Builder<T extends BitmapGlyph> extends SubTable.Builder<T> {
+  
+  public static abstract class Builder<T extends BitmapGlyph> extends SubTable.Builder<T> {
 
     private final int format;
-
+    
     public static Builder<? extends BitmapGlyph> createGlyphBuilder(
         ReadableFontData data, int format) {
       switch (format) {
@@ -123,9 +134,9 @@ public abstract class BitmapGlyph extends SubTable {
     }
 
     public int format() {
-      return format;
+      return this.format;
     }
-
+    
     @Override
     protected void subDataSet() {
       // NOP
@@ -133,7 +144,7 @@ public abstract class BitmapGlyph extends SubTable {
 
     @Override
     protected int subDataSizeToSerialize() {
-      return internalReadData().length();
+      return this.internalReadData().length();
     }
 
     @Override
@@ -143,7 +154,7 @@ public abstract class BitmapGlyph extends SubTable {
 
     @Override
     protected int subSerialize(WritableFontData newData) {
-      return internalReadData().copyTo(newData);
+      return this.internalReadData().copyTo(newData);
     }
   }
 

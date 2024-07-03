@@ -44,7 +44,8 @@ public class LigatureSet extends OffsetRecordTable<Ligature> {
     }
 
     @Override
-    protected void initFields() {}
+    protected void initFields() {
+    }
 
     @Override
     protected int fieldCount() {

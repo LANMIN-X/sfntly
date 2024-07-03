@@ -57,6 +57,7 @@ public class NumRecordTable extends RecordsTable<NumRecord> {
     }
 
     @Override
-    protected void initFields() {}
+    protected void initFields() {
+    }
   }
 }

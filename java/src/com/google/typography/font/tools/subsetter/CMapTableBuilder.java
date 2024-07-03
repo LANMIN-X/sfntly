@@ -19,9 +19,10 @@ package com.google.typography.font.tools.subsetter;
 import com.google.typography.font.sfntly.Font;
 import com.google.typography.font.sfntly.Tag;
 import com.google.typography.font.sfntly.data.FontData;
-import com.google.typography.font.sfntly.table.core.CMap;
+import com.google.typography.font.sfntly.table.core.CMap.CMapFormat;
 import com.google.typography.font.sfntly.table.core.CMapFormat4;
 import com.google.typography.font.sfntly.table.core.CMapTable;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -29,8 +30,8 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 /**
- * This is a medium-level builder for CMap tables, given the mapping from Unicode codepoint to glyph
- * id.
+ * This is a medium-level builder for CMap tables, given the mapping from Unicode codepoint
+ * to glyph id.
  *
  * @author Raph Levien
  */
@@ -54,7 +55,7 @@ public class CMapTableBuilder {
     CMap4Segment(int startCode, int endCode) {
       this.startCode = startCode;
       this.endCode = endCode;
-      this.glyphIds = new ArrayList<>();
+      this.glyphIds = new ArrayList<Integer>();
     }
 
     private boolean isContiguous() {
@@ -93,8 +94,8 @@ public class CMapTableBuilder {
   // glyph ids. A smarter approach would leave "holes", or short runs of glyphs
   // mapped to notdef, to reduce the number of segments.
   private List<CMap4Segment> getFormat4Segments() {
-    List<CMap4Segment> result = new ArrayList<>();
-    SortedMap<Integer, Integer> sortedMap = new TreeMap<>(mapping);
+    List<CMap4Segment> result = new ArrayList<CMap4Segment>();
+    SortedMap<Integer, Integer> sortedMap = new TreeMap<Integer, Integer>(mapping);
     if (!sortedMap.containsKey(MAX_FORMAT4_ENDCODE)) {
       sortedMap.put(MAX_FORMAT4_ENDCODE, 0);
     }
@@ -117,9 +118,11 @@ public class CMapTableBuilder {
     return result;
   }
 
-  private void buildCMapFormat4(CMapFormat4.Builder builder, List<CMap4Segment> segments) {
-    List<CMapFormat4.Builder.Segment> segmentList = new ArrayList<>();
-    List<Integer> glyphIdArray = new ArrayList<>();
+  private void buildCMapFormat4(CMapFormat4.Builder builder,
+                                List<CMap4Segment> segments) {
+    List<CMapFormat4.Builder.Segment> segmentList =
+        new ArrayList<CMapFormat4.Builder.Segment>();
+    List<Integer> glyphIdArray = new ArrayList<Integer>();
 
     // The glyphIndexArray immediately follows the idRangeOffset array, so idOffset counts the
     // offset (in shorts) from the beginning of the idRangeOffset array to the next block of
@@ -131,13 +134,12 @@ public class CMapTableBuilder {
       if (segment.isContiguous()) {
         idRangeOffset = 0;
       } else {
-        idRangeOffset = (idOffset - i) * FontData.SizeOf.USHORT;
+        idRangeOffset = (idOffset - i) * FontData.DataSize.USHORT.size();
         glyphIdArray.addAll(segment.getGlyphIds());
         idOffset += segment.getGlyphIds().size();
       }
-      segmentList.add(
-          new CMapFormat4.Builder.Segment(
-              segment.getStartCode(), segment.getEndCode(), segment.idDelta(), idRangeOffset));
+      segmentList.add(new CMapFormat4.Builder.Segment(segment.getStartCode(), segment.getEndCode(),
+          segment.idDelta(), idRangeOffset));
     }
     builder.setGlyphIdArray(glyphIdArray);
     builder.setSegments(segmentList);
@@ -146,8 +148,8 @@ public class CMapTableBuilder {
   public void build() {
     CMapTable.Builder cmapTableBuilder = (CMapTable.Builder) fontBuilder.newTableBuilder(Tag.cmap);
     CMapFormat4.Builder cmapBuilder =
-        (CMapFormat4.Builder)
-            cmapTableBuilder.newCMapBuilder(CMapTable.CMapId.WINDOWS_BMP, CMap.CMapFormat.Format4);
+        (CMapFormat4.Builder) cmapTableBuilder.newCMapBuilder(CMapTable.CMapId.WINDOWS_BMP,
+            CMapFormat.Format4);
     buildCMapFormat4(cmapBuilder, getFormat4Segments());
   }
 }

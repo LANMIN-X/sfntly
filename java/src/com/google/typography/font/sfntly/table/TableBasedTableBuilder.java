@@ -20,19 +20,32 @@ import com.google.typography.font.sfntly.data.ReadableFontData;
 import com.google.typography.font.sfntly.data.WritableFontData;
 
 /**
- * An abstract base to be used building tables in which the builder can use the table itself to
- * build from.
+ * An abstract base to be used building tables in which the builder can use the
+ * table itself to build from.
  *
  * @author Stuart Gill
+ *
  * @param <T> the type of table to be built
  */
 public abstract class TableBasedTableBuilder<T extends Table> extends Table.Builder<T> {
   private T table;
 
+  /**
+   * Constructor.
+   *
+   * @param header
+   * @param data
+   */
   protected TableBasedTableBuilder(Header header, WritableFontData data) {
     super(header, data);
   }
 
+  /**
+   * Constructor.
+   *
+   * @param header
+   * @param data
+   */
   protected TableBasedTableBuilder(Header header, ReadableFontData data) {
     super(header, data);
   }
@@ -42,10 +55,10 @@ public abstract class TableBasedTableBuilder<T extends Table> extends Table.Buil
   }
 
   protected T table() {
-    if (table == null) {
-      this.table = subBuildTable(internalReadData());
+    if (this.table == null) {
+      this.table = this.subBuildTable(this.internalReadData());
     }
-    return table;
+    return this.table;
   }
 
   @Override
@@ -70,11 +83,11 @@ public abstract class TableBasedTableBuilder<T extends Table> extends Table.Buil
 
   @Override
   public T build() {
-    if (!subReadyToSerialize()) {
+    if (!this.subReadyToSerialize()) {
       return null;
     }
-    T table = table();
-    notifyPostTableBuild(table);
+    T table = this.table();
+    this.notifyPostTableBuild(table);
     return table;
   }
 }
