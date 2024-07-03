@@ -1,3 +1,5 @@
+import java.util.stream.Collectors;
+
 /*
  * Copyright 2011 Google Inc. All Rights Reserved.
  *
@@ -155,8 +157,13 @@ public class SfntTool {
           // 将subsetString转换为Set<Integer>
           Set<Integer> chars = new HashSet<>();
           subsetString.codePoints().forEach(chars::add);
-          
-          List<Integer> glyphs = GlyphCoverage.getGlyphCoverage(font, chars);
+
+          // 将Set<Integer>转换为String
+          String subsetStringFromSet = chars.stream()
+                                            .map(codePoint -> new String(Character.toChars(codePoint)))
+                                            .collect(Collectors.joining());
+
+          List<Integer> glyphs = GlyphCoverage.getGlyphCoverage(font, subsetStringFromSet);
           subsetter.setGlyphs(glyphs);
           subsetter.setCharsCodePoints(chars);
           
