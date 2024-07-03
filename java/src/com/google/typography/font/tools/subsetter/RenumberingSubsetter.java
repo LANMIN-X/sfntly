@@ -23,27 +23,28 @@ import com.google.typography.font.sfntly.Tag;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author Raph Levien
- */
+/** @author Raph Levien */
 public class RenumberingSubsetter extends Subsetter {
 
-  {
-    Set<TableSubsetter> temp = new HashSet<TableSubsetter>();
-    temp.add(new GlyphTableSubsetter());
-    temp.add(new RenumberingCMapTableSubsetter());
-    temp.add(new PostScriptTableSubsetter());
-    temp.add(new HorizontalMetricsTableSubsetter());
-    tableSubsetters = temp;
-  }
+	{
+		Set<TableSubsetter> temp = new HashSet<>();
+		temp.add(new RenumberingCMapTableSubsetter());
 
-  public RenumberingSubsetter(Font font, FontFactory fontFactory) {
-    super(font, fontFactory);
-  }
+		temp.add(new GlyphTableSubsetter());
+		temp.add(new PostScriptTableSubsetter());
+		temp.add(new HorizontalMetricsTableSubsetter());
+//		temp.add(new VerticalMetricsTableSubsetter());
+		tableSubsetters = temp;
+	}
 
-  @Override
-  protected void setUpTables(Font.Builder fontBuilder) {
-    fontBuilder.newTableBuilder(Tag.hhea, font.getTable(Tag.hhea).readFontData());
-    fontBuilder.newTableBuilder(Tag.maxp, font.getTable(Tag.maxp).readFontData());
-  }
+	public RenumberingSubsetter(Font font, FontFactory fontFactory) {
+		super(font, fontFactory);
+	}
+
+	@Override
+	protected void setUpTables(Font.Builder fontBuilder) {
+		fontBuilder.newTableBuilder(Tag.hhea, font.getTable(Tag.hhea).readFontData());
+//		fontBuilder.newTableBuilder(Tag.vhea, font.getTable(Tag.vhea).readFontData());
+		fontBuilder.newTableBuilder(Tag.maxp, font.getTable(Tag.maxp).readFontData());
+	}
 }

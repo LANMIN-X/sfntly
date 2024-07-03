@@ -18,17 +18,13 @@ package com.google.typography.font.tools.subsetter;
 
 import com.google.typography.font.sfntly.Font;
 import com.google.typography.font.sfntly.Tag;
-import com.google.typography.font.sfntly.data.ReadableFontData;
 import com.google.typography.font.sfntly.table.truetype.Glyph;
 import com.google.typography.font.sfntly.table.truetype.GlyphTable;
 import com.google.typography.font.sfntly.table.truetype.LocaTable;
-
 import java.io.IOException;
 import java.util.List;
 
-/**
- * @author Raph Levien
- */
+/** @author Raph Levien */
 public class GlyphTableStripper extends TableSubsetterImpl {
 
   public GlyphTableStripper() {
@@ -44,7 +40,7 @@ public class GlyphTableStripper extends TableSubsetterImpl {
     if (glyphTable == null || locaTable == null) {
       throw new RuntimeException("Font to subset is not valid.");
     }
-    ReadableFontData originalGlyfData = glyphTable.readFontData();
+//    ReadableFontData originalGlyfData = glyphTable.readFontData();
 
     GlyphTable.Builder glyphTableBuilder =
         (GlyphTable.Builder) fontBuilder.newTableBuilder(Tag.glyf);
