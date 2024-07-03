@@ -143,67 +143,72 @@ public class SfntTool {
   }
 
   public void subsetFontFile() throws IOException {
-    FontFactory fontFactory = FontFactory.getInstance();
-    try (FileInputStream fis = new FileInputStream(fontFile)) {
-      byte[] fontBytes = new byte[(int) fontFile.length()];
-      fis.read(fontBytes);
-      Font[] fontArray = fontFactory.loadFonts(fontBytes);
-      Font font = fontArray[0];
-      List<CMapTable.CMapId> cmapIds = new ArrayList<>();
-      cmapIds.add(CMapTable.CMapId.WINDOWS_BMP);
-      for (int i = 0; i < iterations; i++) {
-        Font newFont = font;
-        if (subsetString != null) {
-          Subsetter subsetter = new RenumberingSubsetter(newFont, fontFactory);
-          subsetter.setCMaps(cmapIds, 1);
-          Set<Integer> chars = SfStringUtils.getAllCodepoints(subsetString);
-          List<Integer> glyphs = GlyphCoverage.getGlyphCoverage(font, chars);
-          subsetter.setGlyphs(glyphs);
-          subsetter.setCharsCodePoints(chars);
-          Set<Integer> removeTables = new HashSet<>();
-          // Most of the following are valid tables, but we don't renumber them yet, so strip
-          removeTables.add(Tag.GDEF);
-          removeTables.add(Tag.GPOS);
-          removeTables.add(Tag.GSUB);
-          removeTables.add(Tag.kern);
-          removeTables.add(Tag.hdmx);
-          removeTables.add(Tag.vmtx);
-          removeTables.add(Tag.VDMX);
-          removeTables.add(Tag.LTSH);
-          removeTables.add(Tag.DSIG);
-          removeTables.add(Tag.vhea);
-          // AAT tables, not yet defined in sfntly Tag class
-          removeTables.add(Tag.intValue(new byte[] {'m', 'o', 'r', 't'}));
-          removeTables.add(Tag.intValue(new byte[] {'m', 'o', 'r', 'x'}));
-          subsetter.setRemoveTables(removeTables);
-          newFont = subsetter.subset().build();
-        }
-        if (strip) {
-          Subsetter hintStripper = new HintStripper(newFont, fontFactory);
-          Set<Integer> removeTables = new HashSet<>();
-          removeTables.add(Tag.fpgm);
-          removeTables.add(Tag.prep);
-          removeTables.add(Tag.cvt);
-          removeTables.add(Tag.hdmx);
-          removeTables.add(Tag.VDMX);
-          removeTables.add(Tag.LTSH);
-          removeTables.add(Tag.DSIG);
-          removeTables.add(Tag.vhea);
-          hintStripper.setRemoveTables(removeTables);
-          newFont = hintStripper.subset().build();
-        }
+  FontFactory fontFactory = FontFactory.getInstance();
+  try (FileInputStream fis = new FileInputStream(fontFile)) {
+    byte[] fontBytes = new byte[(int) fontFile.length()];
+    fis.read(fontBytes);
+    Font[] fontArray = fontFactory.loadFonts(fontBytes);
+    Font font = fontArray[0];
+    List<CMapTable.CMapId> cmapIds = new ArrayList<>();
+    cmapIds.add(CMapTable.CMapId.WINDOWS_BMP);
+    for (int i = 0; i < iterations; i++) {
+      Font newFont = font;
+      if (subsetString != null) {
+        Subsetter subsetter = new RenumberingSubsetter(newFont, fontFactory);
+        subsetter.setCMaps(cmapIds, 1);
+        
+        // 将subsetString转换为Set<Integer>
+        Set<Integer> chars = new HashSet<>();
+        subsetString.codePoints().forEach(chars::add);
+        
+        List<Integer> glyphs = GlyphCoverage.getGlyphCoverage(font, chars);
+        subsetter.setGlyphs(glyphs);
+        subsetter.setCharsCodePoints(chars);
+        
+        Set<Integer> removeTables = new HashSet<>();
+        // 移除部分表
+        removeTables.add(Tag.GDEF);
+        removeTables.add(Tag.GPOS);
+        removeTables.add(Tag.GSUB);
+        removeTables.add(Tag.kern);
+        removeTables.add(Tag.hdmx);
+        removeTables.add(Tag.vmtx);
+        removeTables.add(Tag.VDMX);
+        removeTables.add(Tag.LTSH);
+        removeTables.add(Tag.DSIG);
+        removeTables.add(Tag.vhea);
+        // 移除AAT表
+        removeTables.add(Tag.intValue(new byte[] {'m', 'o', 'r', 't'}));
+        removeTables.add(Tag.intValue(new byte[] {'m', 'o', 'r', 'x'}));
+        subsetter.setRemoveTables(removeTables);
+        newFont = subsetter.subset().build();
+      }
+      if (strip) {
+        Subsetter hintStripper = new HintStripper(newFont, fontFactory);
+        Set<Integer> removeTables = new HashSet<>();
+        removeTables.add(Tag.fpgm);
+        removeTables.add(Tag.prep);
+        removeTables.add(Tag.cvt);
+        removeTables.add(Tag.hdmx);
+        removeTables.add(Tag.VDMX);
+        removeTables.add(Tag.LTSH);
+        removeTables.add(Tag.DSIG);
+        removeTables.add(Tag.vhea);
+        hintStripper.setRemoveTables(removeTables);
+        newFont = hintStripper.subset().build();
+      }
 
-        FileOutputStream fos = new FileOutputStream(outputFile);
-        if (woff) {
-          WritableFontData woffData = new WoffWriter().convert(newFont);
-          woffData.copyTo(fos);
-        } else if (eot) {
-          WritableFontData eotData = new EOTWriter(mtx).convert(newFont);
-          eotData.copyTo(fos);
-        } else {
-          fontFactory.serializeFont(newFont, fos);
-        }
+      FileOutputStream fos = new FileOutputStream(outputFile);
+      if (woff) {
+        WritableFontData woffData = new WoffWriter().convert(newFont);
+        woffData.copyTo(fos);
+      } else if (eot) {
+        WritableFontData eotData = new EOTWriter(mtx).convert(newFont);
+        eotData.copyTo(fos);
+      } else {
+        fontFactory.serializeFont(newFont, fos);
       }
     }
   }
+}
 }
