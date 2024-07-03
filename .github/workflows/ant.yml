@@ -27,5 +27,5 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: Package
-          path: dist/tools/sfnttool/sfnttool.jar
+          path: /home/runner/work/sfntly/sfntly/java/dist/tools
 
