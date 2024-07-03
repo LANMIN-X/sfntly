@@ -36,7 +36,7 @@ public class SfntTool {
   // 是否启用Microtype Express压缩
   private boolean mtx = false;
 
-  public static void main(String[] args) throws IOException {
+  public static void main(String[] args) {
     SfntTool tool = new SfntTool();
     File fontFile = null;
     File outputFile = null;
@@ -44,55 +44,60 @@ public class SfntTool {
     int nIters = 1;
 
     // 解析命令行参数
-    for (int i = 0; i < args.length; i++) {
-      String option = null;
-      if (args[i].charAt(0) == '-') {
-        option = args[i].substring(1);
+    try {
+      for (int i = 0; i < args.length; i++) {
+        String option = null;
+        if (args[i].charAt(0) == '-') {
+          option = args[i].substring(1);
+        }
+
+        if (option != null) {
+          // 根据不同选项设置对应的标志
+          if (option.equals("help") || option.equals("?")) {
+            printUsage();
+            System.exit(0);
+          } else if (option.equals("b") || option.equals("bench")) {
+            nIters = 10000;
+          } else if (option.equals("h") || option.equals("hints")) {
+            tool.strip = true;
+          } else if (option.equals("s") || option.equals("string")) {
+            // 处理unicode编码字符串
+            tool.subsetString = decodeUnicodeString(args[i + 1]);
+            i++;
+          } else if (option.equals("w") || option.equals("woff")) {
+            tool.woff = true;
+          } else if (option.equals("e") || option.equals("eot")) {
+            tool.eot = true;
+          } else if (option.equals("x") || option.equals("mtx")) {
+            tool.mtx = true;
+          } else {
+            printUsage();
+            System.exit(1);
+          }
+        } else {
+          if (fontFile == null) {
+            fontFile = new File(args[i]);
+          } else {
+            outputFile = new File(args[i]);
+            break;
+          }
+        }
       }
 
-      if (option != null) {
-        // 根据不同选项设置对应的标志
-        if (option.equals("help") || option.equals("?")) {
-          printUsage();
-          System.exit(0);
-        } else if (option.equals("b") || option.equals("bench")) {
-          nIters = 10000;
-        } else if (option.equals("h") || option.equals("hints")) {
-          tool.strip = true;
-        } else if (option.equals("s") || option.equals("string")) {
-          // 处理unicode编码字符串
-          tool.subsetString = decodeUnicodeString(args[i + 1]);
-          i++;
-        } else if (option.equals("w") || option.equals("woff")) {
-          tool.woff = true;
-        } else if (option.equals("e") || option.equals("eot")) {
-          tool.eot = true;
-        } else if (option.equals("x") || option.equals("mtx")) {
-          tool.mtx = true;
-        } else {
-          printUsage();
-          System.exit(1);
-        }
+      // 检查WOFF和EOT选项是否互斥
+      if (tool.woff && tool.eot) {
+        System.out.println("WOFF和EOT选项互斥");
+        System.exit(1);
+      }
+
+      if (fontFile != null && outputFile != null) {
+        tool.subsetFontFile(fontFile, outputFile, nIters);
       } else {
-        if (fontFile == null) {
-          fontFile = new File(args[i]);
-        } else {
-          outputFile = new File(args[i]);
-          break;
-        }
+        printUsage();
       }
-    }
-
-    // 检查WOFF和EOT选项是否互斥
-    if (tool.woff && tool.eot) {
-      System.out.println("WOFF和EOT选项互斥");
-      System.exit(1);
-    }
-
-    if (fontFile != null && outputFile != null) {
-      tool.subsetFontFile(fontFile, outputFile, nIters);
-    } else {
-      printUsage();
+    } catch (Exception e) {
+      System.err.println("处理过程中发生错误: " + e.getMessage());
+      e.printStackTrace();
     }
   }
 
@@ -112,18 +117,22 @@ public class SfntTool {
   // 解码unicode编码字符串
   private static String decodeUnicodeString(String unicodeString) {
     StringBuilder result = new StringBuilder();
-    String[] parts = unicodeString.split("\\\\u");
-    for (int i = 1; i < parts.length; i++) {
-      String part = parts[i];
-      int codePoint = Integer.parseInt(part, 16);
-      result.append((char) codePoint);
+    try {
+      String[] parts = unicodeString.split("\\\\u");
+      for (int i = 1; i < parts.length; i++) {
+        String part = parts[i];
+        int codePoint = Integer.parseInt(part, 16);
+        result.append((char) codePoint);
+      }
+    } catch (NumberFormatException e) {
+      System.err.println("Unicode字符串格式错误: " + unicodeString);
+      e.printStackTrace();
     }
     return result.toString();
   }
 
   // 子集化字体文件
-  public void subsetFontFile(File fontFile, File outputFile, int nIters)
-      throws IOException {
+  public void subsetFontFile(File fontFile, File outputFile, int nIters) throws IOException {
     FontFactory fontFactory = FontFactory.getInstance();
     FileInputStream fis = null;
     try {
@@ -186,7 +195,13 @@ public class SfntTool {
         } else {
           fontFactory.serializeFont(newFont, fos);
         }
+
+        // 输出处理完成信息
+        System.out.println("字体处理完成：" + outputFile.getAbsolutePath());
       }
+    } catch (Exception e) {
+      System.err.println("处理过程中发生错误: " + e.getMessage());
+      e.printStackTrace();
     } finally {
       if (fis != null) {
         fis.close();
