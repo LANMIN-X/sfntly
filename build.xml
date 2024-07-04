@@ -1,7 +1,7 @@
 <project name="font-converter-gui" default="run" basedir=".">
     <!-- 设置编译时使用的 Java 版本 -->
-    <property name="source" value="12"/>
-    <property name="target" value="12"/>
+    <property name="source" value="11"/>
+    <property name="target" value="11"/>
     <property name="build.dir" value="build"/>
     <property name="classes.dir" value="${build.dir}/classes"/>
     <property name="test.classes.dir" value="${build.dir}/test-classes"/>
