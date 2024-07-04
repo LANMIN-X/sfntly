@@ -1,58 +1,73 @@
-<project name="sfntly" default="dist">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>com.github.tools</groupId>
+	<artifactId>font-converter-gui</artifactId>
+	<version>1.1</version>
+	<description>a javafx gui for google sfntly to help subset ttf fonts</description>
+	<developers>
+		<developer>
+			<id>jijun</id>
+			<name>Jijun</name>
+		</developer>
+	</developers>
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<java.version>12</java.version>
+		<maven.compiler.source>12</maven.compiler.source>
+		<maven.compiler.target>12</maven.compiler.target>
+		<maven.compiler.compilerVersion>12</maven.compiler.compilerVersion>
+	</properties>
+	<dependencies>
+		<dependency>
+			<groupId>org.openjfx</groupId>
+			<artifactId>javafx-controls</artifactId>
+			<version>12.0.2</version>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.12</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.assertj</groupId>
+			<artifactId>assertj-core</artifactId>
+			<version>3.9.0</version>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+	<build>
+		<plugins>           
+                    <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
+                <configuration>
+                    <release>12</release>
+                </configuration>
+            </plugin>
 
-  <import file="common.xml" />
-  <import file="javadoc.xml" />
+			<plugin>
+				<groupId>org.openjfx</groupId>
+				<artifactId>javafx-maven-plugin</artifactId>
+				<version>0.0.3</version>
+				<configuration>
+					<mainClass>com.github.sfntly.gui.FontConverterGui</mainClass>
+                                        <release>12</release>
+                                        <jlinkImageName>Font-Convert-Gui</jlinkImageName>
+                                        <launcher>launcher</launcher>
+                                        <stripDebug>true</stripDebug>
+                                        <compress>2</compress>
+                                        <noHeaderFiles>true</noHeaderFiles>
+                                        <noManPages>true</noManPages>
+                                        <jlinkImageName>Font-Converter-Gui</jlinkImageName>
+                                        <jlinkZipName>Font-Converter-Gui</jlinkZipName>
 
-  <target name="compile-test" depends="compile">
-    <mkdir dir="${classes-test.dir}" />
-    <javac srcdir="${test.dir}" destdir="${classes-test.dir}" includeantruntime="false">
-      <classpath>
-        <fileset dir="${lib.dir}" includes="**/*.jar"/>
-        <pathelement location="${classes.dir}" />
-      </classpath>
-    </javac>
-  </target>
-
-  <target name="test" depends="compile-test">
-   <mkdir dir="${report-test.dir}" />
-    <junit printsummary="true" fork="yes">
-      <classpath>
-        <fileset dir="${lib.dir}" includes="**/*.jar"/>
-        <pathelement location="${classes.dir}" />
-        <pathelement location="${classes-test.dir}" />
-      </classpath>
-      <formatter type="xml" usefile="true" />
-      <batchtest fork="yes" todir="${report-test.dir}">
-        <fileset dir="${test.dir}">
-          <include name="**/*Test*.java"/>
-          <exclude name="**/TestFont.java" />
-          <exclude name="**/TestFontUtils.java" />
-          <exclude name="**/TestUtils.java" />
-        </fileset>
-      </batchtest>
-    </junit>
-  </target>
-
-  <target name="jar" depends="compile">
-    <antcall target="sfntly-jar" />
-  </target>
-
-  <target name="src-jar">
-    <mkdir dir="${dist_src.dir}" />
-    <jar destfile="${dist_src.dir}/${ant.project.name}-src.jar" 
-      basedir="${src.dir}" 
-      excludes="com/google/typography/font/tools/**,com/google/typography/font/sfntly/sample/**" />
-  </target>
-
-  <target name="dist" depends="compile">
-    <antcall target="jar" />
-    <antcall target="src-jar" />
-    <antcall target="doc-jar" />
-    <ant inheritAll="false" dir="${src.dir}/com/google/typography/font/sfntly/sample" />
-    <ant inheritAll="false" dir="${src.dir}/com/google/typography/font/tools/conversion" />
-    <ant inheritAll="false" dir="${src.dir}/com/google/typography/font/tools/fontinfo" />
-    <ant inheritAll="false" dir="${src.dir}/com/google/typography/font/tools/sfnttool" />
-    <ant inheritAll="false" dir="${src.dir}/com/google/typography/font/tools/subsetter" />
-  </target>
-
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 </project>
