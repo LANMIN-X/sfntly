@@ -9,10 +9,6 @@
     <property name="test.src.dir" value="src/test/java"/>
     <property name="lib.dir" value="lib"/>
 
-    <!-- JavaFX 路径 -->
-    <property name="javafx.dir" value="/path/to/javafx-sdk-11/lib"/>
-    <property name="javafx.modules" value="javafx.controls"/>
-
     <!-- 创建构建目录 -->
     <target name="init">
         <mkdir dir="${build.dir}"/>
@@ -29,7 +25,7 @@
 
     <!-- 编译源代码 -->
     <target name="compile" depends="init, get-deps">
-        <javac srcdir="${src.dir}" destdir="${classes.dir}" source="${source}" target="${target}" includeantruntime="false" modulepath="${javafx.dir}">
+        <javac srcdir="${src.dir}" destdir="${classes.dir}" source="${source}" target="${target}" includeantruntime="false">
             <classpath>
                 <fileset dir="${lib.dir}" includes="**/*.jar"/>
             </classpath>
@@ -38,7 +34,7 @@
 
     <!-- 编译测试代码 -->
     <target name="compile-test" depends="compile">
-        <javac srcdir="${test.src.dir}" destdir="${test.classes.dir}" source="${source}" target="${target}" includeantruntime="false" modulepath="${javafx.dir}">
+        <javac srcdir="${test.src.dir}" destdir="${test.classes.dir}" source="${source}" target="${target}" includeantruntime="false">
             <classpath>
                 <path path="${classes.dir}"/>
                 <fileset dir="${lib.dir}" includes="**/*.jar"/>
@@ -48,15 +44,11 @@
 
     <!-- 运行应用程序 -->
     <target name="run" depends="compile">
-        <java fork="true" modulepath="${javafx.dir}" classname="com.github.sfntly.gui.FontConverterGui" classpath="${classes.dir}">
+        <java fork="true" classname="com.github.sfntly.gui.FontConverterGui" classpath="${classes.dir}">
             <classpath>
                 <path path="${classes.dir}"/>
                 <fileset dir="${lib.dir}" includes="**/*.jar"/>
             </classpath>
-            <jvmarg value="--module-path"/>
-            <jvmarg value="${javafx.dir}"/>
-            <jvmarg value="--add-modules"/>
-            <jvmarg value="${javafx.modules}"/>
         </java>
     </target>
 
