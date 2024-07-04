@@ -1,0 +1,76 @@
+<project name="font-converter-gui" default="run" basedir=".">
+    <!-- 设置编译时使用的 Java 版本 -->
+    <property name="source" value="11"/>
+    <property name="target" value="11"/>
+    <property name="build.dir" value="build"/>
+    <property name="classes.dir" value="${build.dir}/classes"/>
+    <property name="test.classes.dir" value="${build.dir}/test-classes"/>
+    <property name="src.dir" value="src/main/java"/>
+    <property name="test.src.dir" value="src/test/java"/>
+    <property name="lib.dir" value="lib"/>
+
+    <!-- 创建构建目录 -->
+    <target name="init">
+        <mkdir dir="${build.dir}"/>
+        <mkdir dir="${classes.dir}"/>
+        <mkdir dir="${test.classes.dir}"/>
+    </target>
+
+    <!-- 下载依赖库 -->
+    <target name="get-deps">
+        <mkdir dir="${lib.dir}"/>
+        <get src="https://repo1.maven.org/maven2/org/openjfx/javafx-controls/12.0.2/javafx-controls-12.0.2.jar" dest="${lib.dir}/javafx-controls-12.0.2.jar"/>
+        <get src="https://repo1.maven.org/maven2/junit/junit/4.12/junit-4.12.jar" dest="${lib.dir}/junit-4.12.jar"/>
+        <get src="https://repo1.maven.org/maven2/org/assertj/assertj-core/3.9.0/assertj-core-3.9.0.jar" dest="${lib.dir}/assertj-core-3.9.0.jar"/>
+    </target>
+
+    <!-- 编译源代码 -->
+    <target name="compile" depends="init, get-deps">
+        <javac srcdir="${src.dir}" destdir="${classes.dir}" source="${source}" target="${target}" includeantruntime="false">
+            <classpath>
+                <fileset dir="${lib.dir}" includes="**/*.jar"/>
+            </classpath>
+        </javac>
+    </target>
+
+    <!-- 编译测试代码 -->
+    <target name="compile-test" depends="compile">
+        <javac srcdir="${test.src.dir}" destdir="${test.classes.dir}" source="${source}" target="${target}" includeantruntime="false">
+            <classpath>
+                <path path="${classes.dir}"/>
+                <fileset dir="${lib.dir}" includes="**/*.jar"/>
+            </classpath>
+        </javac>
+    </target>
+
+    <!-- 运行应用程序 -->
+    <target name="run" depends="compile">
+        <java fork="true" classname="com.github.sfntly.gui.FontConverterGui" classpath="${classes.dir}">
+            <classpath>
+                <path path="${classes.dir}"/>
+                <fileset dir="${lib.dir}" includes="**/*.jar"/>
+            </classpath>
+        </java>
+    </target>
+
+    <!-- 运行测试 -->
+    <target name="test" depends="compile-test">
+        <junit printsummary="on" haltonfailure="yes" fork="yes">
+            <classpath>
+                <path path="${test.classes.dir}"/>
+                <path path="${classes.dir}"/>
+                <fileset dir="${lib.dir}" includes="**/*.jar"/>
+            </classpath>
+            <batchtest fork="yes" todir="${build.dir}">
+                <fileset dir="${test.src.dir}">
+                    <include name="**/*Test.java"/>
+                </fileset>
+            </batchtest>
+        </junit>
+    </target>
+
+    <!-- 清理构建目录 -->
+    <target name="clean">
+        <delete dir="${build.dir}"/>
+    </target>
+</project>

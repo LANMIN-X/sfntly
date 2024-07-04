@@ -21,11 +21,10 @@ jobs:
           java-version: '11'
           distribution: 'temurin'
       - run: |
-            cd java
             ls -l
             ant -noinput -buildfile build.xml
       - uses: actions/upload-artifact@v3
         with:
           name: Package
-          path: /home/runner/work/sfntly/sfntly/java/dist/tools/sfnttool
+          path: /
 
