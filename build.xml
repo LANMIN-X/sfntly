@@ -10,7 +10,7 @@
     <property name="lib.dir" value="lib"/>
 
     <!-- JavaFX 路径 -->
-    <property name="javafx.dir" value="/path/to/javafx-sdk-12/lib"/>
+    <property name="javafx.dir" value="/path/to/javafx-sdk-11/lib"/>
     <property name="javafx.modules" value="javafx.controls"/>
 
     <!-- 创建构建目录 -->
